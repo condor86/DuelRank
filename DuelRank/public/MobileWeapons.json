@@ -1,0 +1,43 @@
+[
+    {
+      "id": 1,
+      "name": "RX-78-2 Gundam",
+      "series": "Mobile Suit Gundam",
+      "imgUrl": "https://i.pinimg.com/736x/61/8f/15/618f1511d88e0bf3f9bf0e2f9ef7df45.jpg",         
+      "crop": 10,
+      "wikiUrl": "https://gundam.fandom.com/wiki/RX-78-2_Gundam",
+      "tags": ["UC", "E.F.S.F"],
+      "notes": "高达屹立于大地之上"
+    },
+    {
+      "id": 2,
+      "name": "MSZ-006 Zeta Gundam",
+      "series": "Zeta Gundam",
+      "imgUrl": "https://i.pinimg.com/1200x/e3/0a/a7/e30aa71018b1327fe7e346ed2a6efe2c.jpg",  
+      "crop": 0,
+      "wikiUrl": "https://gundam.fandom.com/wiki/MSZ-006_Zeta_Gundam",
+      "tags": ["Transformable"],
+      "notes": "可变形，机设流线。"
+    },
+    {
+      "id": 3,
+      "name": "RX-0 Unicorn",
+      "series": "Gundam Unicorn",
+      "imgUrl": "https://i.pinimg.com/1200x/9d/dd/b5/9dddb5c3eaf6f1c060bdd0d86abb3e32.jpg",
+      "crop": 0,
+      "wikiUrl": "https://i.pinimg.com/1200x/9d/dd/b5/9dddb5c3eaf6f1c060bdd0d86abb3e32.jpg",
+      "tags": ["Psycho-Frame"],
+      "notes": "毁灭模式帅到掉渣。"
+    },
+    {
+      "id": 4,
+      "name": "XXXG-00W0 Wing Zero",
+      "series": "Gundam Wing",
+      "imgUrl": "https://i.pinimg.com/1200x/8a/61/30/8a6130440fbb4d4372bcb8e0345b76c7.jpg",
+      "crop": 20,
+      "wikiUrl": "https://i.pinimg.com/1200x/8a/61/30/8a6130440fbb4d4372bcb8e0345b76c7.jpg",
+      "tags": ["Twin Buster"],
+      "notes": "双加农标志性武装。"
+    }
+  ]
+  

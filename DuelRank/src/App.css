@@ -1,0 +1,147 @@
+/* ====== 主题 ====== */
+:root {
+  --bg: #0f1220;
+  --panel: #151a2d;
+  --panel-2: #1b2240;
+  --text: #e7e9f7;
+  --muted: #9aa0c3;
+  --brand: #6c8cff;
+  --brand-2: #8e5cff;
+  --card-radius: 18px;
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.35);
+  --shadow-md: 0 10px 24px rgba(0,0,0,.28);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 800px at 10% -10%, #1f2450 0%, transparent 60%),
+    radial-gradient(1200px 800px at 110% 10%, #2a1856 0%, transparent 55%),
+    #0f1220;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+}
+
+/* ====== 居中骨架：page + page-inner ====== */
+.page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;         /* 关键：把内部的 page-inner 居中 */
+}
+
+.page-inner {
+  width: 100%;
+  max-width: 1120px;           /* 中心栅格宽度 */
+  margin: 0 auto;
+  padding: 0 20px;             /* 两侧安全边距 */
+}
+
+/* ====== 导航（背景全宽，内容用 page-inner 居中） ====== */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  width: 100%;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, rgba(10,12,24,.9), rgba(10,12,24,.55), rgba(10,12,24,0));
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.nav-inner {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .3px; }
+.brand-badge { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 6px 18px rgba(108,140,255,.6); }
+.brand-title { font-size: 18px; }
+.nav-right { display: flex; gap: 10px; }
+.nav-chip { padding: 8px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); }
+.nav-chip.active { color: var(--text); border-color: rgba(255,255,255,.18); }
+
+/* ====== 主体容器（也直接用 page-inner） ====== */
+.container { margin: 18px 0 40px; }     /* 不再用 margin: auto，这里由外层控制 */
+
+.header { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 12px 0 20px; }
+.h-title { font-size: 24px; font-weight: 800; line-height: 1.1; }
+.h-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.h-actions { display: flex; gap: 10px; }
+
+.btn { cursor: pointer; border: 0; color: white; font-weight: 700; padding: 12px 16px; border-radius: 12px; transition: transform .06s ease, filter .15s ease; }
+.btn:hover { filter: brightness(1.05); }
+.btn:active { transform: translateY(1px); }
+.btn-ghost { background: rgba(255,255,255,.06); color: var(--text); border: 1px solid rgba(255,255,255,.12); }
+.btn-primary { background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 10px 24px rgba(108,140,255,.35); }
+
+/* ====== 对比区域 ====== */
+.duel-grid { display: grid; grid-template-columns: 1fr 120px 1fr; gap: 18px; align-items: center; }
+@media (max-width: 960px) { .duel-grid { grid-template-columns: 1fr; } }
+
+.card { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid rgba(255,255,255,.08); border-radius: var(--card-radius); box-shadow: var(--shadow-lg); overflow: hidden; }
+.card-media { position: relative; aspect-ratio: 16 / 10; background: #0b0f1f; overflow: hidden; }
+.card-media img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(104%) contrast(102%); }
+.card-body { padding: 14px 14px 16px; }
+.badges { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.badge { padding: 4px 8px; border-radius: 999px; font-size: 12px; color: #cfd5ff; background: rgba(108,140,255,.14); border: 1px solid rgba(108,140,255,.25); }
+.card-title { font-size: 18px; font-weight: 800; letter-spacing: .2px; }
+.card-sub { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.vote { padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,.12); font-weight: 800; cursor: pointer; }
+.vote.left { background: linear-gradient(135deg, #4d9cff, #5f6bff); }
+.vote.right { background: linear-gradient(135deg, #ff6aa0, #ff7a5f); }
+.vote.skip { background: rgba(255,255,255,.06); color: var(--muted); grid-column: span 2; }
+
+.center-col { display: grid; place-items: center; height: 100%; }
+.vs-circle { width: 88px; height: 88px; border-radius: 999px; display: grid; place-items: center; font-weight: 900; letter-spacing: 1px; background: radial-gradient(circle at 30% 30%, #fff, #dbe0ff 35%, #9aa8ff 70%, #7e6bff); color: #1a1950; box-shadow: 0 18px 30px rgba(126,107,255,.35); border: 4px solid rgba(255,255,255,.4); }
+@media (max-width: 960px) { .center-col { order: -1; margin: 4px 0 8px; } }
+
+/* ====== 排行榜 ====== */
+.rank { margin-top: 26px; background: linear-gradient(180deg, var(--panel), #14182b); border-radius: var(--card-radius); border: 1px solid rgba(255,255,255,.08); overflow: hidden; box-shadow: var(--shadow-md); }
+.rank-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.rank-title { font-weight: 800; }
+.rank-table { width: 100%; border-collapse: collapse; }
+.rank-table th, .rank-table td { padding: 10px 14px; text-align: left; border-top: 1px solid rgba(255,255,255,.06); }
+.rank-table th { color: var(--muted); font-weight: 700; font-size: 12px; }
+.rank-table tbody tr:hover { background: rgba(255,255,255,.03); }
+.rank-pos { width: 56px; color: var(--muted); }
+.rank-score { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ====== 追加：信息行左右布局 & 更松排版 ====== */
+
+/* 卡片正文整体拉开竖向间距（不影响你原有的 .card-body 样式） */
+.body-relaxed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;               /* 你想更松就调大，比如 14/16 */
+}
+
+/* 标题/系列（左） + LOGO（右）的左右分栏 */
+.info-row {
+  display: flex;
+  align-items: flex-start; /* 关键：让 LOGO 顶部与标题顶端对齐 */
+  justify-content: space-between;
+  gap: 20px;               /* 左右栏之间间距 */
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+/* 左侧文字列：标题、系列名之间也更松一点 */
+.info-col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;               /* 文字块之间间距（标题/系列/其它文字） */
+}
+
+/* 右侧 LOGO：更大、更醒目 */
+.series-logo {
+  height: 96px;            /* 想更大可设 112px / 128px */
+  max-width: 220px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  align-self: flex-start;  /* 再保险：和标题顶对齐 */
+}
