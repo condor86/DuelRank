@@ -30,7 +30,7 @@ type SeriesEntry = {
   logoUrl?: string;
   logo_url?: string;
 };
-
+//
 /* ===== 常量 ===== */
 const DATA_URL = "/MobileWeapons.json";
 const SERIES_URL = "/Series.json";
