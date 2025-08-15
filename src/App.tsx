@@ -5,10 +5,34 @@ import "./App.css";
 import { exportState, importStateFromText, resetState } from "./storage";
 import useElo from "./hooks/useElo";
 import pickPair from "./utils/pickPair";
+
 import NavBar from "./components/NavBar";
 import HeaderBar from "./components/HeaderBar";
 import DuelGrid from "./components/DuelGrid";
 import RankTable from "./components/RankTable";
+
+import {
+  CARD_ASPECT,
+  DATA_URL,
+  SERIES_URL,
+  EXPORT_FILENAME,
+  LOAD_TIMEOUT_MS,
+} from "./constants";
+
+/* ===== DEV 全局错误日志（只在开发环境注册一次） ===== */
+if (import.meta.env.DEV) {
+  // @ts-ignore
+  if (!window.__duelrank_err_hook__) {
+    // @ts-ignore
+    window.__duelrank_err_hook__ = true;
+    window.addEventListener("error", (e) => {
+      console.error("[window error]", e.error || e.message);
+    });
+    window.addEventListener("unhandledrejection", (e) => {
+      console.error("[unhandledrejection]", e.reason);
+    });
+  }
+}
 
 /* ===== 类型定义 ===== */
 type Classification = "MS" | "MA" | "MD" | "MW" | string;
@@ -30,11 +54,6 @@ type SeriesEntry = {
   logoUrl?: string;
   logo_url?: string;
 };
-//
-/* ===== 常量 ===== */
-const DATA_URL = "/MobileWeapons.json";
-const SERIES_URL = "/Series.json";
-const CARD_ASPECT = 16 / 10; // 与 .card-media 的 aspect-ratio 保持一致
 
 /* ===== 主组件 ===== */
 export default function App() {
@@ -44,25 +63,54 @@ export default function App() {
   const [loadErr, setLoadErr] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchJson(url: string) {
+    let cancelled = false;
+
+    const fetchJson = async (url: string) => {
+      console.debug("[fetch] ->", url);
       const res = await fetch(url, { cache: "no-store" });
+      console.debug("[fetch] <-", url, res.status, res.statusText);
       if (!res.ok) throw new Error(`${url} HTTP ${res.status}`);
       return res.json();
-    }
+    };
+
+    // 8 秒兜底：防止一直卡“正在加载…”
+    const tFailSafe = setTimeout(() => {
+      if (!cancelled && (!data || !seriesMap)) {
+        console.warn("[load timeout] public/MobileWeapons.json 或 Series.json 可能无法访问");
+        setLoadErr("资源加载超时：请检查 public/MobileWeapons.json 与 Series.json 是否可访问。");
+      }
+    }, LOAD_TIMEOUT_MS);
+
     Promise.all([fetchJson(DATA_URL), fetchJson(SERIES_URL)])
       .then(([list, sList]: [MobileWeapon[], SeriesEntry[]]) => {
-        const ok = list.filter((m) => Number.isFinite(m.id) && !!m.name && !!m.imgUrl);
-        if (ok.length === 0) throw new Error("MobileWeapons.json 为空或格式不正确（至少需要 id/name/imgUrl）");
+        if (cancelled) return;
+
+        const ok = (list ?? []).filter(
+          (m) => Number.isFinite(m.id) && !!m.name && !!m.imgUrl
+        );
+        if (ok.length === 0) {
+          throw new Error("MobileWeapons.json 为空或格式不正确（至少需要 id/name/imgUrl）");
+        }
         setData(ok);
 
         const m = new Map<string, string>();
-        for (const s of sList) {
+        for (const s of sList ?? []) {
           const url = (s.logoUrl ?? s.logo_url ?? "") as string;
           if (s.name && url) m.set(s.name, url);
         }
         setSeriesMap(m);
       })
-      .catch((e) => setLoadErr(e?.message || "数据加载失败"));
+      .catch((e) => {
+        console.error("[load error]", e);
+        setLoadErr(e?.message || "数据加载失败");
+      })
+      .finally(() => clearTimeout(tFailSafe));
+
+    return () => {
+      cancelled = true;
+      clearTimeout(tFailSafe);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const items: MobileWeapon[] = data ?? [];
@@ -87,10 +135,11 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "duelrank-export.json";
+    a.download = EXPORT_FILENAME;
     a.click();
     URL.revokeObjectURL(url);
   };
+
   const handleImport = (file: File | null) => {
     if (!file) return;
     const reader = new FileReader();
@@ -101,6 +150,7 @@ export default function App() {
     };
     reader.readAsText(file, "utf-8");
   };
+
   const handleReset = () => {
     if (confirm("确认重置本地 Elo 数据吗？此操作不可撤销。")) {
       resetState();
@@ -134,9 +184,9 @@ export default function App() {
 
       {/* 主体 */}
       <main className="page-inner container">
-        {/* 标题区 + 操作 */}
+        {/* 标题区 + 操作（HeaderBar 已移除“换一组/我全都喜欢”的渲染） */}
         <HeaderBar
-          onReshuffle={reshuffle}
+          onReshuffle={reshuffle}       // 目前组件内部未使用，保留兼容
           onExport={handleExport}
           onImport={handleImport}
           onReset={handleReset}
@@ -150,9 +200,15 @@ export default function App() {
             leftLogoUrl={logoFor(pair[0].series)}
             rightLogoUrl={logoFor(pair[1].series)}
             containerAspect={CARD_ASPECT}
-            onVoteLeft={() => { update(pair[0].id, pair[1].id); reshuffle(); }}
-            onVoteRight={() => { update(pair[1].id, pair[0].id); reshuffle(); }}
-            onSkip={reshuffle}
+            onVoteLeft={() => {
+              update(pair[0].id, pair[1].id);
+              reshuffle();
+            }}
+            onVoteRight={() => {
+              update(pair[1].id, pair[0].id);
+              reshuffle();
+            }}
+            onSkip={reshuffle}  // 中间栏“跳过这一组”作为唯一换组入口
           />
         )}
 

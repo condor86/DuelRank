@@ -1,16 +1,19 @@
 // src/hooks/useElo.ts
 import { useEffect, useMemo, useState } from "react";
-import { loadState, saveState, type PersistStateV1 } from "../storage";
+import {
+  loadState,
+  saveState,
+  type PersistStateV1,
+} from "../storage";
+import {
+  ELO_INITIAL_RATING,
+  ELO_K_FACTOR,
+  PERSIST_DEBOUNCE_MS,
+} from "../constants";
 
-export type Rating = { id: number; rating: number; games: number };
+type Rating = { id: number; rating: number; games: number };
 
-type IdLike = { id: number };
-
-/**
- * 通用 Elo Hook：只要求 items 含 id:number
- * 会自动从本地存储加载/保存 rating 与出现次数（appear）
- */
-export default function useElo<T extends IdLike>(items: T[]) {
+export default function useElo(items: { id: number }[]) {
   const loaded = loadState();
 
   const [ratings, setRatings] = useState<Rating[]>(() => {
@@ -19,10 +22,10 @@ export default function useElo<T extends IdLike>(items: T[]) {
         const r = loaded.ratings[m.id];
         return r
           ? { id: m.id, rating: r.rating, games: r.games }
-          : { id: m.id, rating: 1000, games: 0 };
+          : { id: m.id, rating: ELO_INITIAL_RATING, games: 0 };
       });
     }
-    return items.map((m) => ({ id: m.id, rating: 1000, games: 0 }));
+    return items.map((m) => ({ id: m.id, rating: ELO_INITIAL_RATING, games: 0 }));
   });
 
   const [appear, setAppear] = useState<Map<number, number>>(() => {
@@ -35,12 +38,12 @@ export default function useElo<T extends IdLike>(items: T[]) {
     return map;
   });
 
-  // 当 items 变化时，补齐/裁剪 ratings 与 appear
+  // 当 items 变化时，对齐已有的评分 & 出场
   useEffect(() => {
     setRatings((prev) => {
       const map = new Map(prev.map((r) => [r.id, r]));
       return items.map(
-        (m) => map.get(m.id) ?? { id: m.id, rating: 1000, games: 0 }
+        (m) => map.get(m.id) ?? { id: m.id, rating: ELO_INITIAL_RATING, games: 0 }
       );
     });
     setAppear((prev) => {
@@ -51,11 +54,12 @@ export default function useElo<T extends IdLike>(items: T[]) {
     });
   }, [items]);
 
-  const get = (id: number) => ratings.find((r) => r.id === id);
+  const get = (id: number) => ratings.find((r) => r.id === id)!;
 
-  const update = (winnerId: number, loserId: number, k = 24) => {
-    const Ra = get(winnerId)?.rating ?? 1000;
-    const Rb = get(loserId)?.rating ?? 1000;
+  /** 胜负更新（winnerId 胜，loserId 负） */
+  const update = (winnerId: number, loserId: number, k = ELO_K_FACTOR) => {
+    const Ra = get(winnerId)?.rating ?? ELO_INITIAL_RATING;
+    const Rb = get(loserId)?.rating ?? ELO_INITIAL_RATING;
     const Ea = 1 / (1 + Math.pow(10, (Rb - Ra) / 400));
     const Eb = 1 - Ea;
 
@@ -64,10 +68,8 @@ export default function useElo<T extends IdLike>(items: T[]) {
 
     setRatings((prev) =>
       prev.map((r) => {
-        if (r.id === winnerId)
-          return { ...r, rating: newRa, games: r.games + 1 };
-        if (r.id === loserId)
-          return { ...r, rating: newRb, games: r.games + 1 };
+        if (r.id === winnerId) return { ...r, rating: newRa, games: r.games + 1 };
+        if (r.id === loserId)  return { ...r, rating: newRb, games: r.games + 1 };
         return r;
       })
     );
@@ -80,12 +82,38 @@ export default function useElo<T extends IdLike>(items: T[]) {
     });
   };
 
+  /** 平局（双方各 0.5）—— 备用：如果以后“我全都喜欢”要计为 draw 可直接用 */
+  const draw = (idA: number, idB: number, k = ELO_K_FACTOR) => {
+    const Ra = get(idA)?.rating ?? ELO_INITIAL_RATING;
+    const Rb = get(idB)?.rating ?? ELO_INITIAL_RATING;
+    const Ea = 1 / (1 + Math.pow(10, (Rb - Ra) / 400));
+    const Eb = 1 - Ea;
+
+    const newRa = Ra + k * (0.5 - Ea);
+    const newRb = Rb + k * (0.5 - Eb);
+
+    setRatings((prev) =>
+      prev.map((r) => {
+        if (r.id === idA) return { ...r, rating: newRa, games: r.games + 1 };
+        if (r.id === idB) return { ...r, rating: newRb, games: r.games + 1 };
+        return r;
+      })
+    );
+
+    setAppear((prev) => {
+      const next = new Map(prev);
+      next.set(idA, (next.get(idA) ?? 0) + 1);
+      next.set(idB, (next.get(idB) ?? 0) + 1);
+      return next;
+    });
+  };
+
   const sorted = useMemo(
     () => [...ratings].sort((a, b) => b.rating - a.rating),
     [ratings]
   );
 
-  // 节流持久化
+  // 持久化（防抖）
   useEffect(() => {
     const t = setTimeout(() => {
       const persist: PersistStateV1 = {
@@ -96,9 +124,9 @@ export default function useElo<T extends IdLike>(items: T[]) {
         appear: Object.fromEntries(appear.entries()),
       };
       saveState(persist);
-    }, 120);
+    }, PERSIST_DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [ratings, appear]);
 
-  return { ratings, sorted, update, appear };
+  return { ratings, sorted, update, draw, appear };
 }
