@@ -1,0 +1,21 @@
+.duel-grid{display:grid;grid-template-columns:1fr;gap:20px}
+.center-col{display:none}
+.mobile-skip{display:block;text-align:center}
+.mobile-skip .vote.skip{margin-top:6px}
+
+/* 桌面三列 + 中间列定位 */
+@media (min-width:960px){
+  .duel-grid{grid-template-columns:minmax(0,1fr) minmax(120px,200px) minmax(0,1fr);gap:24px;align-items:stretch}
+  .center-col{display:flex;flex-direction:column;align-items:center;position:relative;height:100%}
+  .vs-wrapper,.skip-wrapper{display:flex;justify-content:center;width:100%}
+  .vs-wrapper{margin-top:var(--vs-margin-top)}
+  .skip-wrapper{position:absolute;top:var(--skip-top,0px);left:0;right:0;margin-top:0}
+  .mobile-skip{display:none}
+}
+
+/* VS 圆 */
+.vs-circle{
+  width:88px;height:88px;border-radius:999px;display:grid;place-items:center;font-weight:900;letter-spacing:1px;
+  background:radial-gradient(circle at 30% 30%,#fff,#dbe0ff 35%,#9aa8ff 70%,#7e6bff);
+  color:#1a1950;box-shadow:0 18px 30px rgba(126,107,255,.35);border:4px solid rgba(255,255,255,.4);
+}

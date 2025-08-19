@@ -1,0 +1,17 @@
+@import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
+
+:root{
+  --bg:#0f1220; --panel:#151a2d; --panel-2:#1b2240;
+  --text:#e7e9f7; --muted:#9aa0c3; --brand:#6c8cff; --brand-2:#8e5cff;
+  --card-radius:18px; --shadow-lg:0 12px 40px rgba(0,0,0,.35); --shadow-md:0 10px 24px rgba(0,0,0,.28);
+
+  /* 中间列定位 */
+  --vs-margin-top:220px;   /* VS 初始下移 */
+  /* JS 每帧写入：--skip-top */
+
+  /* LOGO 行 */
+  --logo-row-h:96px;
+  --logo-tags-gap:14px;   /* LOGO→TAG 额外间距 */
+
+  /* 系列默认黄（白字）会在 duel-card.css 里用到 */
+}

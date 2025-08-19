@@ -1,0 +1,11 @@
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 800px at 10% -10%, #1f2450 0%, transparent 60%),
+    radial-gradient(1200px 800px at 110% 10%, #2a1856 0%, transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+}

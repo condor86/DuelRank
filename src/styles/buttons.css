@@ -1,0 +1,5 @@
+.btn{cursor:pointer;border:0;color:white;font-weight:700;padding:12px 16px;border-radius:12px;transition:transform .06s ease,filter .15s ease}
+.btn:hover{filter:brightness(1.05)}
+.btn:active{transform:translateY(1px)}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.12)}
+.btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 10px 24px rgba(108,140,255,.35)}

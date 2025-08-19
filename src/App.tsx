@@ -1,6 +1,7 @@
 // src/App.tsx
 import { useEffect, useMemo, useState } from "react";
-import "./App.css";
+//import "./App.css";
+import "./styles/index.css";
 
 import { exportState, importStateFromText, resetState } from "./storage";
 import useElo from "./hooks/useElo";
