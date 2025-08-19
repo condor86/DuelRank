@@ -5,29 +5,32 @@ import CroppedImage from "./CroppedImage";
 type MobileWeaponLike = {
   id: number;
 
+  // 两行标题
   code?: string;
   modelName?: string;
-  name?: string;              // 兼容旧数据
-  kana?: string;
+  name?: string;              // 兼容旧数据回退
 
-  classification?: string;    // 类型（MS/MA…）
-  organization?: string;      // 所属组织（E.F.S.F./ZEON…）
-  series?: string;            // 所属系列（用于映射系列 LOGO）
+  // 追加字段
+  kana?: string;              // 片假名
+  official?: string;          // 新：官方简介行（短句，如 ZETA 示例）
+  quoteText?: string;         // 新：引用内容（台词）
+  quoteBy?: string;           // 新：说话的人（署名）
 
+  // 其它
+  classification?: string;
+  organization?: string;
+  series?: string;
   imgUrl: string;
   wikiUrl?: string;
   tags?: string[];
-  notes?: string;
+  notes?: string;             // 兼容旧：若 quoteText 缺省则用 notes 兜底
   crop?: number;
 };
 
 type Props = {
   item: MobileWeaponLike;
-  /** 系列 LOGO（父层映射后传入） */
-  seriesLogoUrl?: string;
-  /** 组织 LOGO（父层映射后传入） */
-  orgLogoUrl?: string;
-
+  seriesLogoUrl?: string;     // 系列 LOGO（父层映射）
+  orgLogoUrl?: string;        // 组织 LOGO（父层映射）
   containerAspect: number;
   side: "left" | "right";
   onVote: () => void;
@@ -44,10 +47,10 @@ function splitNameFallback(name?: string) {
   return { code, modelName };
 }
 
+/** 组织配色 key（已在 CSS 里映射颜色） */
 function orgKey(text?: string) {
   const t = (text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
   if (!t) return "other";
-
   const checks: Array<[key: string, aliases: string[]]> = [
     ["zeon",   ["zeon", "zion", "neozeon", "principalityofzeon"]],
     ["efsf",   ["efsf", "eff", "earthfederation", "earthfederationspaceforce", "earthfederationforces"]],
@@ -55,37 +58,27 @@ function orgKey(text?: string) {
     ["titans", ["titans"]],
     ["zaft",   ["zaft"]],
   ];
-
   for (const [key, names] of checks) {
     if (names.some(a => t.includes(a))) return key;
   }
   return "other";
 }
 
+/** 系列配色 key（默认黄；含 SEED、CCA 特例） */
 function seriesKey(text?: string) {
   const raw = (text ?? "").toLowerCase();
-  const t = raw.replace(/[^a-z0-9]+/g, ""); // 归一化：只保留字母数字
+  const t = raw.replace(/[^a-z0-9]+/g, "");
   if (!raw) return "default";
-
-  // 原文（日文）别名：先用 raw 检查，避免被正则清空
   if (raw.includes("逆襲のシャア")) return "cca";
-
-  // 英文/罗马字别名：与 orgKey 相同写法
   const checks: Array<[key: string, aliases: string[]]> = [
     ["seed", ["gundamseed", "seeddestiny", "seed", "destiny"]],
     ["cca",  ["charscounterattack", "cca"]],
-    // 需要时继续在这里追加：
-    // ["unicorn", ["gundamunicorn", "unicorn"]],
-    // ["uc",      ["uc", "universalcentury"]],
   ];
-
   for (const [key, aliases] of checks) {
     if (aliases.some(a => t.includes(a))) return key;
   }
-  return "default"; // 其它系列用默认（黄色）
+  return "default";
 }
-
-
 
 type BadgeKind = "type" | "org" | "series" | "tag";
 type BadgeItem = { text: string; kind: BadgeKind };
@@ -106,7 +99,7 @@ export default function DuelCard({
 
   const logos = [seriesLogoUrl, orgLogoUrl].filter(Boolean) as string[];
 
-  // ===== 收集徽章：类型 → 组织 → 系列 → 自定义 tags（去重） =====
+  // 徽章：类型 → 组织 → 系列 → 自定义 tags（去重）
   const badgeRaw: BadgeItem[] = [];
   if (item.classification) badgeRaw.push({ text: item.classification, kind: "type" });
   if (item.organization)   badgeRaw.push({ text: item.organization,   kind: "org" });
@@ -116,10 +109,13 @@ export default function DuelCard({
   const seen = new Set<string>();
   const badges = badgeRaw.filter(b => {
     const key = b.text.trim().toLowerCase();
-    if (seen.has(key)) return false;
+    if (!key || seen.has(key)) return false;
     seen.add(key);
-    return !!b.text.trim();
+    return true;
   });
+
+  // 引用：优先用新字段，缺省时用旧 notes 兜底
+  const quoteText = item.quoteText ?? item.notes ?? "";
 
   return (
     <article className="card">
@@ -140,26 +136,30 @@ export default function DuelCard({
             <span className="title-name">{modelName}</span>
           </div>
 
-          {/* 片假名（可选） */}
+          {/* 片假名 */}
           {item.kana && <div className="card-kana">{item.kana}</div>}
+
+          {/* 官方简介行（新）—— 位于片假名之后、LOGO 之前 */}
+          {item.official && <div className="card-official">{item.official}</div>}
 
           {/* LOGO 行（系列 / 组织） */}
           {logos.length > 0 && (
             <div className="logos-row">
-              {logos.map((url, i) => (
-                <img key={url + i} src={url} alt="logo" className="logo-inline" loading="lazy" />
-              ))}
+              {seriesLogoUrl && (
+                <img src={seriesLogoUrl} alt={`${item.series ?? "Series"} logo`} className="logo-inline" loading="lazy" />
+              )}
+              {orgLogoUrl && (
+                <img src={orgLogoUrl} alt={`${item.organization ?? "Organization"} logo`} className="logo-inline" loading="lazy" />
+              )}
             </div>
           )}
 
-          {/* TAG 徽章（带类型区分的配色） */}
+          {/* TAG 徽章（带类型区分 + 组织/系列专用配色） */}
           {badges.length > 0 && (
             <div className="badges">
               {badges.map((b) => {
-                const extraOrgClass =
-                  b.kind === "org" ? ` badge-org--${orgKey(b.text)}` : "";
-                const extraSeriesClass =
-                  b.kind === "series" ? ` badge-series--${seriesKey(b.text)}` : "";
+                const extraOrgClass    = b.kind === "org"    ? ` badge-org--${orgKey(b.text)}` : "";
+                const extraSeriesClass = b.kind === "series" ? ` badge-series--${seriesKey(b.text)}` : "";
                 return (
                   <span
                     key={`${b.kind}:${b.text}`}
@@ -172,10 +172,13 @@ export default function DuelCard({
             </div>
           )}
 
-
-
-          {/* 简介 */}
-          {item.notes && <p className="card-desc">{item.notes}</p>}
+          {/* 引用块（新）—— 大引号、斜体，署名右对齐 */}
+          {quoteText && (
+            <figure className="card-quote">
+              <blockquote className="quote-text">{quoteText}</blockquote>
+              {item.quoteBy && <figcaption className="quote-by">— {item.quoteBy}</figcaption>}
+            </figure>
+          )}
 
           {/* 外链（可选） */}
           {item.wikiUrl && (
