@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
 import { exportState, importStateFromText, resetState } from "./storage";
@@ -39,7 +39,15 @@ type Classification = "MS" | "MA" | "MD" | "MW" | string;
 
 type MobileWeapon = {
   id: number;
-  name: string;
+
+  // 新增：拆分后的两段标题（可选）
+  code?: string;        // 例：RX-78-2
+  modelName?: string;   // 例：GUNDAM / Hi-ν GUNDAM
+  // 兼容旧字段（方法A会在加载时补齐为 code + ' ' + modelName）
+  name?: string;
+
+  // 其它字段
+  kana?: string;
   classification: Classification;
   series?: string;
   imgUrl: string;
@@ -54,6 +62,10 @@ type SeriesEntry = {
   logoUrl?: string;
   logo_url?: string;
 };
+
+/* 辅助：生成展示名（供方法A使用） */
+const makeDisplayName = (x: Partial<MobileWeapon>) =>
+  [x.code, x.modelName].filter(Boolean).join(" ").trim() || x.name || "";
 
 /* ===== 主组件 ===== */
 export default function App() {
@@ -73,7 +85,7 @@ export default function App() {
       return res.json();
     };
 
-    // 8 秒兜底：防止一直卡“正在加载…”
+    // 兜底：防止一直卡“正在加载…”
     const tFailSafe = setTimeout(() => {
       if (!cancelled && (!data || !seriesMap)) {
         console.warn("[load timeout] public/MobileWeapons.json 或 Series.json 可能无法访问");
@@ -85,14 +97,22 @@ export default function App() {
       .then(([list, sList]: [MobileWeapon[], SeriesEntry[]]) => {
         if (cancelled) return;
 
-        const ok = (list ?? []).filter(
-          (m) => Number.isFinite(m.id) && !!m.name && !!m.imgUrl
+        // === 方法A：在加载阶段补齐 name（若缺） ===
+        const normalized: MobileWeapon[] = (list ?? []).map((m) => {
+          const display = makeDisplayName(m);
+          return { ...m, name: m.name ?? display };
+        });
+
+        // 过滤有效项：id + imgUrl + （name 现在已补齐）
+        const ok = normalized.filter(
+          (m) => Number.isFinite(m.id) && !!m.imgUrl && !!(m.name && m.name.trim())
         );
         if (ok.length === 0) {
-          throw new Error("MobileWeapons.json 为空或格式不正确（至少需要 id/name/imgUrl）");
+          throw new Error("MobileWeapons.json 为空或格式不正确（至少需要 id/imgUrl，且能生成展示名）");
         }
         setData(ok);
 
+        // 作品名 -> logoUrl 映射
         const m = new Map<string, string>();
         for (const s of sList ?? []) {
           const url = (s.logoUrl ?? s.logo_url ?? "") as string;
@@ -184,9 +204,9 @@ export default function App() {
 
       {/* 主体 */}
       <main className="page-inner container">
-        {/* 标题区 + 操作（HeaderBar 已移除“换一组/我全都喜欢”的渲染） */}
+        {/* 标题区 + 操作 */}
         <HeaderBar
-          onReshuffle={reshuffle}       // 目前组件内部未使用，保留兼容
+          onReshuffle={reshuffle}
           onExport={handleExport}
           onImport={handleImport}
           onReset={handleReset}
@@ -208,7 +228,7 @@ export default function App() {
               update(pair[1].id, pair[0].id);
               reshuffle();
             }}
-            onSkip={reshuffle}  // 中间栏“跳过这一组”作为唯一换组入口
+            onSkip={reshuffle} // 中间栏“跳过这一组”作为唯一换组入口
           />
         )}
 

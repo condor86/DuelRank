@@ -1,7 +1,7 @@
-/* === Google Fonts（只需此一处） === */
+/* === Google Fonts（一次引入） === */
 @import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
 
-/* ====== 主题 ====== */
+/* ===== 主题变量 ===== */
 :root {
   --bg: #0f1220;
   --panel: #151a2d;
@@ -15,10 +15,16 @@
   --shadow-md: 0 10px 24px rgba(0,0,0,.28);
 
   /* 中间列（桌面端） */
-  --vs-margin-top: 220px;       /* VS 圆形的初始下移距离 */
-  /* JS 每帧写入：--skip-top，用于定位中间“跳过”按钮 */
+  --vs-margin-top: 220px;   /* VS 圆形的初始下移距离 */
+  /* JS 每帧写入：--skip-top，用于定位“跳过”按钮 */
+
+  /* LOGO 行高（可按需覆盖） */
+  --logo-row-h: 96px;
+  /* 可调的 LOGO→TAG 间距 */
+  --logo-tags-gap: 14px;
 }
 
+/* ===== 全局基础 ===== */
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
 
@@ -27,12 +33,12 @@ body {
   background:
     radial-gradient(1200px 800px at 10% -10%, #1f2450 0%, transparent 60%),
     radial-gradient(1200px 800px at 110% 10%, #2a1856 0%, transparent 55%),
-    #0f1220;
+    var(--bg);
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
 }
 
-/* ====== 居中骨架：page + page-inner ====== */
+/* ===== 居中骨架 ===== */
 .page {
   width: 100%;
   display: flex;
@@ -46,7 +52,7 @@ body {
   padding: 0 20px;
 }
 
-/* ====== 导航 ====== */
+/* ===== 顶部导航 ===== */
 .nav {
   position: sticky;
   top: 0;
@@ -69,27 +75,28 @@ body {
 .nav-chip { padding: 8px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); }
 .nav-chip.active { color: var(--text); border-color: rgba(255,255,255,.18); }
 
-/* ====== 主体容器 ====== */
+/* ===== 主体容器 ===== */
 .container { margin: 18px 0 40px; }
-
 .header { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 12px 0 20px; }
 .h-title { font-size: 24px; font-weight: 800; line-height: 1.1; }
 .h-sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
 .h-actions { display: flex; gap: 10px; }
 
+/* ===== 按钮 ===== */
 .btn { cursor: pointer; border: 0; color: white; font-weight: 700; padding: 12px 16px; border-radius: 12px; transition: transform .06s ease, filter .15s ease; }
 .btn:hover { filter: brightness(1.05); }
 .btn:active { transform: translateY(1px); }
 .btn-ghost { background: rgba(255,255,255,.06); color: var(--text); border: 1px solid rgba(255,255,255,.12); }
 .btn-primary { background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 10px 24px rgba(108,140,255,.35); }
 
-/* ====== 对比区域（移动端优先） ====== */
+/* ===== 对比区域（移动端优先） ===== */
 .duel-grid {
   display: grid;
-  grid-template-columns: 1fr;     /* 单列 */
+  grid-template-columns: 1fr;   /* 单列 */
   gap: 20px;
 }
 
+/* 卡片 */
 .card {
   background: linear-gradient(180deg, var(--panel), var(--panel-2));
   border: 1px solid rgba(255,255,255,.08);
@@ -104,16 +111,23 @@ body {
 .badges { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .badge { padding: 4px 8px; border-radius: 999px; font-size: 12px; color: #cfd5ff; background: rgba(108,140,255,.14); border: 1px solid rgba(108,140,255,.25); }
 
-/* 标题：使用 Michroma（扁宽无衬线，科技感） */
+/* 标题：两行（代码 + 名称） */
 .card-title{
   font-family: "Michroma", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  font-weight: 400;               /* Michroma 单字重 */
+  font-weight: 400;
   letter-spacing: .6px;
   line-height: 1.05;
-  font-variant-numeric: tabular-nums; /* 数字等宽，编号更稳 */
-}
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(22px, 1.2vw + 14px, 32px); /* 自适应字号 */
 
-/* 片假名行（位于标题与系列名之间） */
+  display: flex;
+  flex-direction: column; /* 第一行 code，第二行 modelName */
+}
+.card-title .title-code,
+.card-title .title-name{ display: block; }
+.card-title .title-name{ margin-top: 2px; }
+
+/* 片假名行：位于标题与系列之间 */
 .card-kana {
   font-size: 14px;
   line-height: 1.25;
@@ -129,32 +143,54 @@ body {
     ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
 }
 
+/* 系列名 */
 .card-sub { color: var(--muted); font-size: 12px; margin-top: 6px; }
 
-/* 默认的 card-actions：两列（兼容其它地方使用） */
-.card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-/* DuelCard 内部使用的“竖排等宽”版本 */
-.card .card-actions.btns-stacked { display: flex; flex-direction: column; gap: 10px; }
-.card .card-actions.btns-stacked .vote { display: block; width: 100%; }
+/* 纵向内容栈（标题/kana/系列/LOGO/简介） */
+.info-stack{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
+/* LOGO 行（可调高度），位于简介之前 */
+.series-logo-row{
+  height: var(--logo-row-h);
+  display: flex;
+  align-items: center;     /* 行内垂直居中 LOGO */
+}
+.series-logo-inline{
+  height: 100%;
+  max-width: 100%;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* 简介 */
+.card-desc { color: #dfe3ff; line-height: 1.6; }
+
+/* 行为按钮（竖排等宽） */
+.card-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.card .card-actions .vote { display: block; width: 100%; }
 .vote { padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,.12); font-weight: 800; cursor: pointer; }
 .vote.left  { background: linear-gradient(135deg, #4d9cff, #5f6bff); }
 .vote.right { background: linear-gradient(135deg, #ff6aa0, #ff7a5f); }
-.vote.skip  { background: rgba(255,255,255,.06); color: var(--muted); grid-column: span 2; }
+.vote.skip  { background: rgba(255,255,255,.06); color: var(--muted); }
 
 /* 中间列（移动端隐藏） */
 .center-col { display: none; }
 
-/* 移动端专用跳过 */
+/* 移动端跳过（两卡之后显示） */
 .mobile-skip { display: block; text-align: center; }
 .mobile-skip .vote.skip { margin-top: 6px; }
 
-/* ====== 桌面端（≥960px）：三列 + 中间列显示 VS 与 跳过 ====== */
+/* ===== 桌面端（≥960px）：三列 + 中间列显示 VS 与 跳过 ===== */
 @media (min-width: 960px) {
   .duel-grid {
     grid-template-columns: minmax(0, 1fr) minmax(120px, 200px) minmax(0, 1fr);
     gap: 24px;
-    align-items: stretch;        /* 关键：拉伸每个 grid item 到整行高度 */
+    align-items: stretch;      /* 关键：每个 grid item 拉伸到整行高度 */
   }
 
   /* 中间列作为绝对定位参照，并保持水平居中布局 */
@@ -162,8 +198,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;          /* 关键：定位参照 */
-    height: 100%;                /* 关键：占满网格行高度 */
+    position: relative;       /* 定位参照 */
+    height: 100%;             /* 占满网格行高度 */
   }
 
   .vs-wrapper,
@@ -173,7 +209,7 @@ body {
     width: 100%;
   }
 
-  /* VS 的初始下移距离仍用变量控制 */
+  /* VS 的初始下移距离 */
   .vs-wrapper { margin-top: var(--vs-margin-top); }
 
   /* 跳过按钮：绝对定位，由 JS 每帧写入 --skip-top */
@@ -182,13 +218,13 @@ body {
     top: var(--skip-top, 0px);
     left: 0;
     right: 0;
-    margin-top: 0;               /* 防止旧 margin 干扰 */
+    margin-top: 0;           /* 防止旧 margin 干扰 */
   }
 
   .mobile-skip { display: none; }
 }
 
-/* ====== VS 圆形 ====== */
+/* ===== VS 圆形 ===== */
 .vs-circle {
   width: 88px; height: 88px; border-radius: 999px;
   display: grid; place-items: center;
@@ -199,7 +235,7 @@ body {
   border: 4px solid rgba(255,255,255,.4);
 }
 
-/* ====== 排行榜 ====== */
+/* ===== 排行榜 ===== */
 .rank {
   margin-top: 26px;
   background: linear-gradient(180deg, var(--panel), #14182b);
@@ -217,18 +253,12 @@ body {
 .rank-pos { width: 56px; color: var(--muted); }
 .rank-score { text-align: right; font-variant-numeric: tabular-nums; }
 
-/* ====== 追加：信息行左右布局 & 更松排版 ====== */
+/* ===== 版式细节 ===== */
 .body-relaxed { display: flex; flex-direction: column; gap: 12px; }
-.info-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-top: 6px; margin-bottom: 8px; }
-.info-col { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
-.series-logo { height: 96px; max-width: 220px; object-fit: contain; flex: 0 0 auto; align-self: flex-start; }
 
+/* 放到 info-stack 里时，取消 badges 自带的额外外边距 */
+.info-stack > .badges { margin: 0; }
 
-.card-title{
-  /* 移动到桌面自适应：最小 22px，最大 32px，中段随宽度平滑变化 */
-  font-size: clamp(22px, 1.2vw + 14px, 32px);
-  line-height: 1.05;
-  letter-spacing: .6px;
-  transform: scaleX(1.0);
-  transform-origin: left center;
+.info-stack .series-logo-row + .badges {
+  margin-top: var(--logo-tags-gap);
 }

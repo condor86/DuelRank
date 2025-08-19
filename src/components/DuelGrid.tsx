@@ -1,9 +1,15 @@
 import { useLayoutEffect, useRef } from "react";
 import DuelCard from "./DuelCard";
 
+// 顶部类型定义处改为：
 type MobileWeaponLike = {
   id: number;
-  name: string;
+
+  code?: string;        // 新
+  modelName?: string;   // 新
+  name?: string;        // 兼容旧数据
+
+  kana?: string;
   classification?: string;
   series?: string;
   imgUrl: string;
@@ -12,6 +18,7 @@ type MobileWeaponLike = {
   notes?: string;
   crop?: number;
 };
+
 
 type Props = {
   left: MobileWeaponLike;

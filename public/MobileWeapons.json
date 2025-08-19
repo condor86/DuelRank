@@ -1,17 +1,22 @@
 [
     {
       "id": 1,
-      "name": "RX-78-2 Gundam",
+      "code": "RX-78-2",
+      "modelName": "GUNDAM",
+      "kana": "ガンダム",
+      "classification": "MS",
       "series": "Mobile Suit Gundam",
-      "imgUrl": "https://i.pinimg.com/736x/61/8f/15/618f1511d88e0bf3f9bf0e2f9ef7df45.jpg",         
-      "crop": 10,
-      "wikiUrl": "https://gundam.fandom.com/wiki/RX-78-2_Gundam",
-      "tags": ["UC", "E.F.S.F"],
-      "notes": "高达屹立于大地之上"
+      "imgUrl": "https://i.pinimg.com/736x/61/8f/15/618f1511d88e0bf3f9bf0e2f9ef7df45.jpg",
+      "wikiUrl": "https://gundam.fandom.com/wiki/MSZ-006_Zeta_Gundam",
+      "tags": ["E.F.S.F"],
+      "notes": "高达应立于大地之上。",
+      "crop": 10
     },
     {
       "id": 2,
-      "name": "MSZ-006 Zeta Gundam",
+      "code": "MSZ-006",
+      "modelName": "Zeta Gundam",
+      "kana": "ガンダム",
       "series": "Zeta Gundam",
       "imgUrl": "https://i.pinimg.com/1200x/e3/0a/a7/e30aa71018b1327fe7e346ed2a6efe2c.jpg",  
       "crop": 0,
