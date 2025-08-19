@@ -12,6 +12,9 @@ export const BASE_URL = import.meta.env.BASE_URL || "/";
 export const DATA_URL = `${BASE_URL}MobileWeapons.json`;
 export const SERIES_URL = `${BASE_URL}Series.json`;
 
+/** 新增：组织 → logo 列表 */
+export const ORGS_URL = `${BASE_URL}Orgs.json`;
+
 /** —— 视觉/布局 —— 
  * 与 App.css 中 .card-media { aspect-ratio: 16 / 10 } 保持一致
  */

@@ -8,9 +8,10 @@
       "series": "Mobile Suit Gundam",
       "imgUrl": "https://i.pinimg.com/736x/61/8f/15/618f1511d88e0bf3f9bf0e2f9ef7df45.jpg",
       "wikiUrl": "https://gundam.fandom.com/wiki/MSZ-006_Zeta_Gundam",
-      "tags": ["E.F.S.F"],
+      "tags": [""],
       "notes": "高达应立于大地之上。",
-      "crop": 10
+      "crop": 10,
+      "organization":"A.E.U.G"
     },
     {
       "id": 2,

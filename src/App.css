@@ -256,9 +256,125 @@ body {
 /* ===== 版式细节 ===== */
 .body-relaxed { display: flex; flex-direction: column; gap: 12px; }
 
-/* 放到 info-stack 里时，取消 badges 自带的额外外边距 */
+/* === 多 LOGO 行（系列 & 组织） === */
+.series-logo-row,
+.logos-row{
+  height: var(--logo-row-h);
+  display: flex;
+  align-items: center;
+  gap: 12px;                 /* 多个 LOGO 之间的水平间距 */
+}
+
+.series-logo-inline,
+.logo-inline{
+  height: 100%;
+  max-width: 100%;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* LOGO 行紧跟 TAG 行的额外间距（之前你加过 series 版本，这里合并） */
+.info-stack .series-logo-row + .badges,
+.info-stack .logos-row + .badges{
+  margin-top: var(--logo-tags-gap, 14px);
+}
+
+/* 放到 info-stack 里时，取消 badges 额外外边距（保持由 gap/上条规则控制） */
 .info-stack > .badges { margin: 0; }
 
-.info-stack .series-logo-row + .badges {
-  margin-top: var(--logo-tags-gap);
+/* === 多种徽章配色（在已有 .badge 基础上细分） === */
+.badge { 
+  padding: 4px 8px; border-radius: 999px; font-size: 12px;
+  border: 1px solid rgba(108,140,255,.25); 
+  color: #cfd5ff; 
+  background: rgba(108,140,255,.14); 
+}
+
+/* 类型（MS/MA…）：蓝调，强调“机种” */
+.badge--type {
+  color: #dfe7ff;
+  background: rgba(108,140,255,.22);
+  border-color: rgba(108,140,255,.38);
+}
+
+/* 组织（E.F.S.F./ZEON…）：青绿，对比度高 */
+.badge--org {
+  color: #dff8f0;
+  background: rgba(28, 196, 150, .20);     /* teal-ish */
+  border-color: rgba(28, 196, 150, .35);
+}
+
+/* 系列（UC/Seed…）：紫调，呼应 --brand-2 */
+.badge--series {
+  color: #efe3ff;
+  background: rgba(142, 92, 255, .22);
+  border-color: rgba(142, 92, 255, .38);
+}
+
+/* 自定义 tag：低调灰蓝，保留基础风格 */
+.badge--tag {
+  color: #cfd5ff;
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.18);
+}
+
+/* 组织：ZEON = 红 */
+.badge.badge--org.badge-org--zeon {
+  color: #ffe4e4;
+  background: rgba(255, 72, 72, .22);
+  border-color: rgba(255, 72, 72, .40);
+}
+
+/* 组织：E.F.S.F. = 蓝（与品牌蓝系一致） */
+.badge.badge--org.badge-org--efsf {
+  color: #dfe7ff;
+  background: rgba(108, 140, 255, .22);
+  border-color: rgba(108, 140, 255, .40);
+}
+
+/* ZAFT = 深红 */
+.badge.badge--org.badge-org--zaft {
+  color: #ffe4e4;
+  background: rgba(200, 40, 60, .24);
+  border-color: rgba(200, 40, 60, .42);
+}
+
+/* TITANS = 靛蓝 */
+.badge.badge--org.badge-org--titans {
+  color: #e6ebff;
+  background: rgba(60, 70, 150, .25);
+  border-color: rgba(60, 70, 150, .42);
+}
+
+/* 组织：AEUG = 白色 */
+.badge.badge--org.badge-org--aeug {
+  color: #ffffff;
+  background: rgba(255, 255, 255, .18);
+  border-color: rgba(255, 255, 255, .36);
+}
+
+/* 其它组织（未映射）仍用基础的 .badge--org 配色即可 */
+
+/* 系列：默认 = 高达黄 */
+.badge--series {
+  color: #fff;
+  background: rgba(255, 209, 59, .36);   /* 适度更实一点的黄色 */
+  border-color: rgba(255, 209, 59, .62);
+  /* 可选：让白字更清晰一点 */
+  /* text-shadow: 0 1px 0 rgba(0,0,0,.18); */
+}
+
+/* 系列特例：SEED = 青蓝（取 TV 标题 LOGO 的氛围） */
+.badge.badge--series.badge-series--seed {
+  color: #e6fbff;
+  background: rgba(0, 170, 210, .26);
+  border-color: rgba(0, 170, 210, .48);
+}
+
+/* 系列特例：逆袭的夏亚（CCA）= 大红 */
+.badge.badge--series.badge-series--cca {
+  color: #fff0f0;
+  background: rgba(220, 36, 36, .28);
+  border-color: rgba(220, 36, 36, .52);
 }

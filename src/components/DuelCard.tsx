@@ -5,31 +5,36 @@ import CroppedImage from "./CroppedImage";
 type MobileWeaponLike = {
   id: number;
 
-  // 两行标题
-  code?: string;          // 例：RX-78-2
-  modelName?: string;     // 例：GUNDAM / Hi-ν GUNDAM
-  name?: string;          // 兼容旧数据
+  code?: string;
+  modelName?: string;
+  name?: string;              // 兼容旧数据
+  kana?: string;
 
-  kana?: string;          // 片假名（可选）
-  classification?: string;
-  series?: string;        // 仍用于拿 logo，但不再显示文字行
+  classification?: string;    // 类型（MS/MA…）
+  organization?: string;      // 所属组织（E.F.S.F./ZEON…）
+  series?: string;            // 所属系列（用于映射系列 LOGO）
+
   imgUrl: string;
   wikiUrl?: string;
   tags?: string[];
   notes?: string;
-  crop?: number;          // 0-100：0=最左/最上；50=居中；100=最右/最下
+  crop?: number;
 };
 
 type Props = {
   item: MobileWeaponLike;
-  logoUrl?: string;                // 系列 LOGO（从父组件传）
+  /** 系列 LOGO（父层映射后传入） */
+  seriesLogoUrl?: string;
+  /** 组织 LOGO（父层映射后传入） */
+  orgLogoUrl?: string;
+
   containerAspect: number;
   side: "left" | "right";
   onVote: () => void;
   voteButtonRef?: Ref<HTMLButtonElement>;
 };
 
-// 兼容旧数据：若没有 code/modelName，就从 name 拆
+// 兼容：若没有 code/modelName，就从 name 拆
 function splitNameFallback(name?: string) {
   const s = (name ?? "").trim();
   if (!s) return { code: "", modelName: "" };
@@ -39,9 +44,56 @@ function splitNameFallback(name?: string) {
   return { code, modelName };
 }
 
+function orgKey(text?: string) {
+  const t = (text ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (!t) return "other";
+
+  const checks: Array<[key: string, aliases: string[]]> = [
+    ["zeon",   ["zeon", "zion", "neozeon", "principalityofzeon"]],
+    ["efsf",   ["efsf", "eff", "earthfederation", "earthfederationspaceforce", "earthfederationforces"]],
+    ["aeug",   ["aeug", "antiearthuniongroup"]],
+    ["titans", ["titans"]],
+    ["zaft",   ["zaft"]],
+  ];
+
+  for (const [key, names] of checks) {
+    if (names.some(a => t.includes(a))) return key;
+  }
+  return "other";
+}
+
+function seriesKey(text?: string) {
+  const raw = (text ?? "").toLowerCase();
+  const t = raw.replace(/[^a-z0-9]+/g, ""); // 归一化：只保留字母数字
+  if (!raw) return "default";
+
+  // 原文（日文）别名：先用 raw 检查，避免被正则清空
+  if (raw.includes("逆襲のシャア")) return "cca";
+
+  // 英文/罗马字别名：与 orgKey 相同写法
+  const checks: Array<[key: string, aliases: string[]]> = [
+    ["seed", ["gundamseed", "seeddestiny", "seed", "destiny"]],
+    ["cca",  ["charscounterattack", "cca"]],
+    // 需要时继续在这里追加：
+    // ["unicorn", ["gundamunicorn", "unicorn"]],
+    // ["uc",      ["uc", "universalcentury"]],
+  ];
+
+  for (const [key, aliases] of checks) {
+    if (aliases.some(a => t.includes(a))) return key;
+  }
+  return "default"; // 其它系列用默认（黄色）
+}
+
+
+
+type BadgeKind = "type" | "org" | "series" | "tag";
+type BadgeItem = { text: string; kind: BadgeKind };
+
 export default function DuelCard({
   item,
-  logoUrl,
+  seriesLogoUrl,
+  orgLogoUrl,
   containerAspect,
   side,
   onVote,
@@ -51,6 +103,23 @@ export default function DuelCard({
   const modelName = item.modelName ?? splitNameFallback(item.name).modelName;
   const fullTitle =
     code && modelName ? `${code} ${modelName}` : item.name ?? code ?? modelName;
+
+  const logos = [seriesLogoUrl, orgLogoUrl].filter(Boolean) as string[];
+
+  // ===== 收集徽章：类型 → 组织 → 系列 → 自定义 tags（去重） =====
+  const badgeRaw: BadgeItem[] = [];
+  if (item.classification) badgeRaw.push({ text: item.classification, kind: "type" });
+  if (item.organization)   badgeRaw.push({ text: item.organization,   kind: "org" });
+  if (item.series)         badgeRaw.push({ text: item.series,         kind: "series" });
+  for (const t of item.tags ?? []) badgeRaw.push({ text: t, kind: "tag" });
+
+  const seen = new Set<string>();
+  const badges = badgeRaw.filter(b => {
+    const key = b.text.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return !!b.text.trim();
+  });
 
   return (
     <article className="card">
@@ -64,49 +133,57 @@ export default function DuelCard({
       </div>
 
       <div className="card-body body-relaxed">
-        {/* 纵向信息栈：标题 / 片假名 / LOGO / TAG / 简介 */}
         <div className="info-stack">
-        {/* 两行标题：第一行 code，第二行 modelName */}
-        <div className="card-title">
-          <span className="title-code">{code}</span>
-          <span className="title-name">{modelName}</span>
+          {/* 两行标题 */}
+          <div className="card-title">
+            <span className="title-code">{code}</span>
+            <span className="title-name">{modelName}</span>
+          </div>
+
+          {/* 片假名（可选） */}
+          {item.kana && <div className="card-kana">{item.kana}</div>}
+
+          {/* LOGO 行（系列 / 组织） */}
+          {logos.length > 0 && (
+            <div className="logos-row">
+              {logos.map((url, i) => (
+                <img key={url + i} src={url} alt="logo" className="logo-inline" loading="lazy" />
+              ))}
+            </div>
+          )}
+
+          {/* TAG 徽章（带类型区分的配色） */}
+          {badges.length > 0 && (
+            <div className="badges">
+              {badges.map((b) => {
+                const extraOrgClass =
+                  b.kind === "org" ? ` badge-org--${orgKey(b.text)}` : "";
+                const extraSeriesClass =
+                  b.kind === "series" ? ` badge-series--${seriesKey(b.text)}` : "";
+                return (
+                  <span
+                    key={`${b.kind}:${b.text}`}
+                    className={`badge badge--${b.kind}${extraOrgClass}${extraSeriesClass}`}
+                  >
+                    {b.text}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+
+
+          {/* 简介 */}
+          {item.notes && <p className="card-desc">{item.notes}</p>}
+
+          {/* 外链（可选） */}
+          {item.wikiUrl && (
+            <a className="btn btn-ghost" href={item.wikiUrl} target="_blank" rel="noreferrer">
+              查看百科
+            </a>
+          )}
         </div>
-
-        {/* 片假名（可选） */}
-        {item.kana && <div className="card-kana">{item.kana}</div>}
-
-        {/* 先放 LOGO 行（高度由 --logo-row-h 控制） */}
-        {logoUrl && (
-          <div className="series-logo-row">
-            <img
-              src={logoUrl}
-              alt={`${item.series ?? ""} logo`}
-              className="series-logo-inline"
-              loading="lazy"
-            />
-          </div>
-        )}
-
-        {/* 再放 TAG 行（classification + tags） */}
-        {(item.tags?.length ?? 0) > 0 && (
-          <div className="badges">
-            {item.classification && <span className="badge">{item.classification}</span>}
-            {item.tags!.map((t) => (
-              <span key={t} className="badge">{t}</span>
-            ))}
-          </div>
-        )}
-
-        {/* 简介 */}
-        {item.notes && <p className="card-desc">{item.notes}</p>}
-      </div>
-
-        {/* 外链（可选） */}
-        {item.wikiUrl && (
-          <a className="btn btn-ghost" href={item.wikiUrl} target="_blank" rel="noreferrer">
-            查看百科
-          </a>
-        )}
 
         {/* 行为按钮 */}
         <div className="card-actions btns-stacked">

@@ -1,17 +1,16 @@
+// src/components/DuelGrid.tsx
 import { useLayoutEffect, useRef } from "react";
 import DuelCard from "./DuelCard";
 
-// 顶部类型定义处改为：
 type MobileWeaponLike = {
   id: number;
-
-  code?: string;        // 新
-  modelName?: string;   // 新
-  name?: string;        // 兼容旧数据
-
+  code?: string;
+  modelName?: string;
+  name?: string;
   kana?: string;
   classification?: string;
   series?: string;
+  organization?: string;      // ← 新增：所属组织
   imgUrl: string;
   wikiUrl?: string;
   tags?: string[];
@@ -19,12 +18,18 @@ type MobileWeaponLike = {
   crop?: number;
 };
 
-
 type Props = {
   left: MobileWeaponLike;
   right: MobileWeaponLike;
+
+  /* 系列 LOGO（沿用原字段） */
   leftLogoUrl?: string;
   rightLogoUrl?: string;
+
+  /* 新增：组织 LOGO */
+  leftOrgLogoUrl?: string;
+  rightOrgLogoUrl?: string;
+
   containerAspect: number;
   onVoteLeft: () => void;
   onVoteRight: () => void;
@@ -36,6 +41,8 @@ export default function DuelGrid({
   right,
   leftLogoUrl,
   rightLogoUrl,
+  leftOrgLogoUrl,
+  rightOrgLogoUrl,
   containerAspect,
   onVoteLeft,
   onVoteRight,
@@ -58,24 +65,19 @@ export default function DuelGrid({
       raf = requestAnimationFrame(loop);
 
       const cs = getComputedStyle(center);
-      if (cs.display === "none") return; // 中列在某些断点隐藏时不更新
+      if (cs.display === "none") return;
 
       const leftRect   = leftBtn.getBoundingClientRect();
       const centerRect = center.getBoundingClientRect();
       const skipRect   = skip.getBoundingClientRect();
 
-      // 左侧按钮中心Y → 换算到 center-col 的本地坐标
       const centerYInCenter = (leftRect.top + leftRect.height / 2) - centerRect.top;
-
-      // 目标 top：让 skip 的中心对齐左按钮中心
       let top = centerYInCenter - skipRect.height / 2;
 
-      // 夹紧避免越界
       const maxTop = Math.max(0, centerRect.height - skipRect.height);
       if (top < 0) top = 0;
       else if (top > maxTop) top = maxTop;
 
-      // 有明显变化再写，避免无谓抖动
       if (Math.abs(top - lastTop) >= 0.5) {
         center.style.setProperty("--skip-top", `${Math.round(top)}px`);
         lastTop = top;
@@ -88,17 +90,18 @@ export default function DuelGrid({
 
   return (
     <section className="duel-grid">
-      {/* 左卡片（传入按钮 ref 供测量） */}
+      {/* 左卡片 */}
       <DuelCard
         item={left}
-        logoUrl={leftLogoUrl}
+        seriesLogoUrl={leftLogoUrl}
+        orgLogoUrl={leftOrgLogoUrl}
         containerAspect={containerAspect}
         side="left"
         onVote={onVoteLeft}
         voteButtonRef={leftVoteBtnRef}
       />
 
-      {/* 中间列：VS + 跳过（桌面端可见） */}
+      {/* 中间列 */}
       <div className="center-col" ref={centerColRef}>
         <div className="vs-wrapper">
           <div className="vs-circle">VS</div>
@@ -113,13 +116,14 @@ export default function DuelGrid({
       {/* 右卡片 */}
       <DuelCard
         item={right}
-        logoUrl={rightLogoUrl}
+        seriesLogoUrl={rightLogoUrl}
+        orgLogoUrl={rightOrgLogoUrl}
         containerAspect={containerAspect}
         side="right"
         onVote={onVoteRight}
       />
 
-      {/* 移动端跳过（不参与对齐） */}
+      {/* 移动端跳过 */}
       <div className="mobile-skip">
         <button className="vote skip" onClick={onSkip}>
           跳过这一组

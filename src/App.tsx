@@ -15,6 +15,7 @@ import {
   CARD_ASPECT,
   DATA_URL,
   SERIES_URL,
+  ORGS_URL,           // ← 新增
   EXPORT_FILENAME,
   LOAD_TIMEOUT_MS,
 } from "./constants";
@@ -40,38 +41,37 @@ type Classification = "MS" | "MA" | "MD" | "MW" | string;
 type MobileWeapon = {
   id: number;
 
-  // 新增：拆分后的两段标题（可选）
-  code?: string;        // 例：RX-78-2
-  modelName?: string;   // 例：GUNDAM / Hi-ν GUNDAM
-  // 兼容旧字段（方法A会在加载时补齐为 code + ' ' + modelName）
-  name?: string;
+  // 新结构：两段标题
+  code?: string;
+  modelName?: string;
+  name?: string;            // 兼容旧字段（加载时会补齐）
 
-  // 其它字段
   kana?: string;
   classification: Classification;
-  series?: string;
+
+  series?: string;          // 用于取系列 LOGO（不再显示文字）
+  organization?: string;    // ← 新增：所属组织，用于取组织 LOGO
+
   imgUrl: string;
   wikiUrl?: string;
   tags?: string[];
   notes?: string;
-  crop?: number; // 0-100：0=最左/最上；50=居中；100=最右/最下
+  crop?: number; // 0~100
 };
 
-type SeriesEntry = {
-  name: string;
-  logoUrl?: string;
-  logo_url?: string;
-};
+type SeriesEntry = { name: string; logoUrl?: string; logo_url?: string };
+type OrgEntry    = { name: string; logoUrl?: string; logo_url?: string };
 
-/* 辅助：生成展示名（供方法A使用） */
+/* 辅助：生成展示名（用于方法A回填 name） */
 const makeDisplayName = (x: Partial<MobileWeapon>) =>
   [x.code, x.modelName].filter(Boolean).join(" ").trim() || x.name || "";
 
 /* ===== 主组件 ===== */
 export default function App() {
-  // 加载数据（机体 + 作品 LOGO）
+  // 数据
   const [data, setData] = useState<MobileWeapon[] | null>(null);
   const [seriesMap, setSeriesMap] = useState<Map<string, string> | null>(null);
+  const [orgMap, setOrgMap] = useState<Map<string, string> | null>(null);   // ← 新增
   const [loadErr, setLoadErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -85,25 +85,28 @@ export default function App() {
       return res.json();
     };
 
-    // 兜底：防止一直卡“正在加载…”
     const tFailSafe = setTimeout(() => {
-      if (!cancelled && (!data || !seriesMap)) {
-        console.warn("[load timeout] public/MobileWeapons.json 或 Series.json 可能无法访问");
-        setLoadErr("资源加载超时：请检查 public/MobileWeapons.json 与 Series.json 是否可访问。");
+      if (!cancelled && (!data || !seriesMap || !orgMap)) {
+        console.warn("[load timeout] 数据文件可能无法访问");
+        setLoadErr("资源加载超时：请检查 MobileWeapons.json / Series.json / Orgs.json 是否可访问。");
       }
     }, LOAD_TIMEOUT_MS);
 
-    Promise.all([fetchJson(DATA_URL), fetchJson(SERIES_URL)])
-      .then(([list, sList]: [MobileWeapon[], SeriesEntry[]]) => {
+    Promise.all([
+      fetchJson(DATA_URL),
+      fetchJson(SERIES_URL),
+      fetchJson(ORGS_URL),       // ← 新增
+    ])
+      .then(([list, sList, oList]: [MobileWeapon[], SeriesEntry[], OrgEntry[]]) => {
         if (cancelled) return;
 
-        // === 方法A：在加载阶段补齐 name（若缺） ===
+        // 方法A：补齐 name
         const normalized: MobileWeapon[] = (list ?? []).map((m) => {
           const display = makeDisplayName(m);
           return { ...m, name: m.name ?? display };
         });
 
-        // 过滤有效项：id + imgUrl + （name 现在已补齐）
+        // 过滤有效项
         const ok = normalized.filter(
           (m) => Number.isFinite(m.id) && !!m.imgUrl && !!(m.name && m.name.trim())
         );
@@ -112,13 +115,21 @@ export default function App() {
         }
         setData(ok);
 
-        // 作品名 -> logoUrl 映射
-        const m = new Map<string, string>();
+        // 系列名 -> logoUrl
+        const sm = new Map<string, string>();
         for (const s of sList ?? []) {
           const url = (s.logoUrl ?? s.logo_url ?? "") as string;
-          if (s.name && url) m.set(s.name, url);
+          if (s.name && url) sm.set(s.name, url);
         }
-        setSeriesMap(m);
+        setSeriesMap(sm);
+
+        // 组织名 -> logoUrl
+        const om = new Map<string, string>();
+        for (const o of oList ?? []) {
+          const url = (o.logoUrl ?? o.logo_url ?? "") as string;
+          if (o.name && url) om.set(o.name, url);
+        }
+        setOrgMap(om);
       })
       .catch((e) => {
         console.error("[load error]", e);
@@ -183,19 +194,20 @@ export default function App() {
   if (loadErr) {
     return <div style={{ padding: 24, color: "#fff" }}>数据加载失败：{loadErr}</div>;
   }
-  if (!data || !seriesMap) {
+  if (!data || !seriesMap || !orgMap) {
     return <div style={{ padding: 24, color: "#fff" }}>正在加载数据…</div>;
   }
   if (items.length < 2) {
     return (
       <div style={{ padding: 24, color: "#fff", lineHeight: 1.6 }}>
         机体数据不足（当前 {items.length} 条）。<br />
-        请在 <code>public/MobileWeapons.json</code> 中至少添加 2 条记录；并确认 <code>public/Series.json</code> 中包含对应作品与 logoUrl。
+        请在 <code>public/MobileWeapons.json</code> 中至少添加 2 条记录；并确认 <code>public/Series.json</code> 与 <code>public/Orgs.json</code> 中包含对应 logoUrl。
       </div>
     );
   }
 
-  const logoFor = (series?: string) => (series ? seriesMap.get(series) : undefined);
+  const seriesLogoFor = (series?: string) => (series ? seriesMap.get(series) : undefined);
+  const orgLogoFor    = (org?: string)    => (org ? orgMap.get(org) : undefined);
 
   return (
     <div className="page">
@@ -204,7 +216,6 @@ export default function App() {
 
       {/* 主体 */}
       <main className="page-inner container">
-        {/* 标题区 + 操作 */}
         <HeaderBar
           onReshuffle={reshuffle}
           onExport={handleExport}
@@ -217,8 +228,12 @@ export default function App() {
           <DuelGrid
             left={pair[0]}
             right={pair[1]}
-            leftLogoUrl={logoFor(pair[0].series)}
-            rightLogoUrl={logoFor(pair[1].series)}
+            /* 系列 LOGO（沿用原先 left/rightLogoUrl） */
+            leftLogoUrl={seriesLogoFor(pair[0].series)}
+            rightLogoUrl={seriesLogoFor(pair[1].series)}
+            /* 新增：组织 LOGO */
+            leftOrgLogoUrl={orgLogoFor(pair[0].organization)}
+            rightOrgLogoUrl={orgLogoFor(pair[1].organization)}
             containerAspect={CARD_ASPECT}
             onVoteLeft={() => {
               update(pair[0].id, pair[1].id);
@@ -228,7 +243,7 @@ export default function App() {
               update(pair[1].id, pair[0].id);
               reshuffle();
             }}
-            onSkip={reshuffle} // 中间栏“跳过这一组”作为唯一换组入口
+            onSkip={reshuffle}
           />
         )}
 
