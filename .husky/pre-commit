@@ -1,0 +1,3 @@
+pnpm run --if-present test || true
+# 如果你安装并配置了 lint-staged，再放开下一行
+# npx --no-install lint-staged || true
