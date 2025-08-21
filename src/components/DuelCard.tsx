@@ -2,6 +2,8 @@
 import { Ref } from "react";
 import CroppedImage from "./CroppedImage";
 
+type Specs = Record<string, any>;
+
 type MobileWeaponLike = {
   id: number;
 
@@ -25,6 +27,9 @@ type MobileWeaponLike = {
   tags?: string[];
   notes?: string;             // 兼容旧：若 quoteText 缺省则用 notes 兜底
   crop?: number;
+
+  // 新增：可选 specs
+  specs?: Specs;
 };
 
 type Props = {
@@ -83,6 +88,201 @@ function seriesKey(text?: string) {
 type BadgeKind = "type" | "org" | "series" | "tag";
 type BadgeItem = { text: string; kind: BadgeKind };
 
+/* ===== specs 渲染工具 ===== */
+const HUMANIZE = (s: string) =>
+  s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+/** 生成更好看的标签文本（优先用末级键） */
+function labelFor(pathOrKey: string) {
+  const last = pathOrKey.split(".").pop()!;
+  return HUMANIZE(last);
+}
+
+/** 将值与单位格式化为字符串节点 */
+function formatValueAndUnit(v: any): JSX.Element | string {
+  // 对象形态优先支持 { value, unit } 与 { count }
+  if (v && typeof v === "object" && !Array.isArray(v)) {
+    const hasCount = typeof v.count === "number";
+    const hasValue = v.value !== undefined && v.value !== null;
+    const unit = v.unit ? String(v.unit) : "";
+
+    if (hasCount && !hasValue) {
+      // × count
+      return <>×&nbsp;{v.count}</>;
+    }
+    if (hasValue) {
+      return <>{String(v.value)}{unit ? ` ${unit}` : ""}</>;
+    }
+    // 兜底：对象转简洁 JSON
+    return JSON.stringify(v);
+  }
+
+  // 标量
+  if (typeof v === "boolean") return v ? "Yes" : "No";
+  return String(v);
+}
+
+/** 渲染一行：空格-空格 + 粗体标题 + 空格 + 值 + 可选空格单位 */
+function SpecLine({
+  title,
+  valueNode
+}: {
+  title: string;
+  valueNode: JSX.Element | string;
+}) {
+  return (
+    <div className="specs-line">
+      {/* 前缀：空格-空格 */}
+      <span>{' '}–{' '}</span>
+      <strong className="specs-key">{title}</strong>
+      <span>{' '}</span>
+      <span className="specs-val">{valueNode}</span>
+    </div>
+  );
+}
+
+/** 渲染分组标题：加粗、略大、单独一行 */
+function GroupTitle({ text }: { text: string }) {
+  return <div className="specs-group-title"><strong>{HUMANIZE(text)}</strong></div>;
+}
+
+/** 识别 armaments/arnaments/arnament 的 key */
+function isArmamentsKey(k: string) {
+  const n = k.toLowerCase();
+  return n === "armaments" || n === "arnaments" || n === "arnament";
+}
+
+/** 主渲染：有啥就显示啥，顺序遵循 _meta.displayOrder（如有） */
+function SpecsBlock({ specs }: { specs: Specs }) {
+  if (!specs || typeof specs !== "object") return null;
+
+  const order: string[] =
+    (specs._meta?.displayOrder as string[])?.filter(Boolean) ??
+    Object.keys(specs).filter(k => k !== "_meta");
+
+  return (
+    <div className="specs-block">
+      {order.map(groupKey => {
+        const groupVal = specs[groupKey];
+        if (groupVal == null) return null;
+
+        // 顶层是标量（如 pilot: "Amuro Ray"）
+        if (typeof groupVal !== "object" || Array.isArray(groupVal)) {
+          // 数组顶层：仅在 armaments 特判，否则逐项字符串化
+          if (Array.isArray(groupVal)) {
+            if (isArmamentsKey(groupKey)) {
+              return (
+                <div key={groupKey} className="specs-group">
+                  <GroupTitle text={groupKey} />
+                  {groupVal.map((it, i) => {
+                    // 行：␣-␣ + name + [␣×␣count]
+                    const name = it?.name ?? String(it ?? "");
+                    const count = typeof it?.count === "number" ? it.count : undefined;
+                    return (
+                      <div key={`${groupKey}[${i}]`} className="specs-line">
+                        <span>{' '}–{' '}</span>
+                        <span>{name}</span>
+                        {count !== undefined && (
+                          <>
+                            <span>{' '}</span>
+                            <span>×</span>
+                            <span>{' '}</span>
+                            <span>{count}</span>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            }
+            // 其它数组：按元素字符串化
+            return (
+              <div key={groupKey} className="specs-group">
+                <GroupTitle text={groupKey} />
+                {groupVal.map((it, i) => (
+                  <SpecLine
+                    key={`${groupKey}[${i}]`}
+                    title={labelFor(`${groupKey}[${i}]`)}
+                    valueNode={typeof it === "object" ? JSON.stringify(it) : String(it)}
+                  />
+                ))}
+              </div>
+            );
+          }
+
+          // 标量：直接一行
+          return (
+            <div key={groupKey} className="specs-group">
+              <GroupTitle text={groupKey} />
+              <SpecLine title={labelFor(groupKey)} valueNode={formatValueAndUnit(groupVal)} />
+            </div>
+          );
+        }
+
+        // 常规对象分组（如 dimensions / mass / power ...）
+        const entries = Object.entries(groupVal).filter(([k]) => k !== "_meta");
+        return (
+          <div key={groupKey} className="specs-group">
+            <GroupTitle text={groupKey} />
+            {entries.map(([k, v]) => {
+              // 组内数组：若是 armaments 类数组（少见），按上面的规则；否则逐项字符串化
+              if (Array.isArray(v)) {
+                const path = `${groupKey}.${k}`;
+                if (isArmamentsKey(k)) {
+                  return (
+                    <div key={path}>
+                      {v.map((it, i) => {
+                        const name = it?.name ?? String(it ?? "");
+                        const count = typeof it?.count === "number" ? it.count : undefined;
+                        return (
+                          <div key={`${path}[${i}]`} className="specs-line">
+                            <span>{' '}–{' '}</span>
+                            <span>{name}</span>
+                            {count !== undefined && (
+                              <>
+                                <span>{' '}</span>
+                                <span>×</span>
+                                <span>{' '}</span>
+                                <span>{count}</span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+                return (
+                  <div key={path}>
+                    {v.map((it, i) => (
+                      <SpecLine
+                        key={`${path}[${i}]`}
+                        title={labelFor(`${path}[${i}]`)}
+                        valueNode={typeof it === "object" ? JSON.stringify(it) : String(it)}
+                      />
+                    ))}
+                  </div>
+                );
+              }
+
+              // 标量或对象值：常规一行（对象优先识别 value/unit 或 count）
+              return (
+                <SpecLine
+                  key={`${groupKey}.${k}`}
+                  title={labelFor(`${groupKey}.${k}`)}
+                  valueNode={formatValueAndUnit(v)}
+                />
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ======= 组件主体 ======= */
 export default function DuelCard({
   item,
   seriesLogoUrl,
@@ -169,6 +369,18 @@ export default function DuelCard({
                   </span>
                 );
               })}
+            </div>
+          )}
+
+          {/* ==== 新增：SPECS 信息块（位于 TAG 之后、QUOTE 之前） ==== */}
+          {item.specs && (
+            <div
+              className="specs-wrapper"
+              // 默认字号参考片假名行：如果你有 CSS 类 .card-kana，可用同等大小；
+              // 这里内联一个小调整，之后你可在样式表里覆盖 .specs-block/.specs-group-title 等类
+              style={{ fontSize: "0.95em", lineHeight: 1.4 }}
+            >
+              <SpecsBlock specs={item.specs} />
             </div>
           )}
 

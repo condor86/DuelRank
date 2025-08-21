@@ -13,7 +13,31 @@
       "wikiUrl": "https://gundam.fandom.com/wiki/MSZ-006_Zeta_Gundam",
       "tags": [""],
       "crop": 10,
-      "organization":"A.E.U.G"
+      "organization":"A.E.U.G",
+      "specs": {
+        "dimensions": {
+          "head_height": { "value": 18.0, "unit": "m" },
+          "overall_height": { "value": 18.5, "unit": "m" }
+        },
+        "mass": {
+          "empty_weight": { "value": 43.4, "unit": "t" },
+          "max_weight": { "value": 60.0, "unit": "t" }
+        },
+        "power": {
+          "plant": "Minovsky Ultracompact Fusion Reactor",
+          "output": { "value": 1380, "unit": "kW" }
+        },
+        "sensors": {
+          "range": { "value": 5700, "unit": "m" }
+        },
+        "armor": {
+          "type": "Luna Titanium Alloy"
+        },
+        "armaments": [
+          { "name": "Beam Saber", "count": 2 },
+          { "name": "Beam Rifle" }
+        ]
+      }
     },
     {
       "id": 2,
