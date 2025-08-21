@@ -1,22 +1,7 @@
 // src/components/DuelGrid.tsx
 import { useLayoutEffect, useRef } from "react";
-import DuelCard from "./DuelCard";
-
-type MobileWeaponLike = {
-  id: number;
-  code?: string;
-  modelName?: string;
-  name?: string;
-  kana?: string;
-  classification?: string;
-  series?: string;
-  organization?: string;      // ← 新增：所属组织
-  imgUrl: string;
-  wikiUrl?: string;
-  tags?: string[];
-  notes?: string;
-  crop?: number;
-};
+import { DuelCard } from "./duelcard";           // ✅ 来自 barrel 的命名导入
+import type { MobileWeaponLike } from "./duelcard"; // ✅ 复用统一类型，避免重复
 
 type Props = {
   left: MobileWeaponLike;

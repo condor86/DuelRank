@@ -122,3 +122,11 @@
     background: rgba(255,255,255,.2);
   }
 }
+
+/* ===== Specs 分组间隔：每个大标题段落后留一整行空行 ===== */
+.specs-block .specs-group {
+  margin-bottom: 1.4em;  /* 1.4 ≈ 与我们给 specs 的 line-height 对齐 */
+}
+
+/* 关键：在整个 specs 区块的顶部和底部，各留出“正好一行”的内边距 */
+.specs-block { padding-top: 1.4em}
