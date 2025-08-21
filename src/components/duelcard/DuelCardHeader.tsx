@@ -1,24 +1,62 @@
 // src/components/duelcard/DuelCardHeader.tsx
-import { useRef } from "react";
+import { useRef, useLayoutEffect } from "react";
 import TitleLogo from "./TitleLogo";
-import useCompressToWidth from "../../hooks/useCompressToWidth"; // 或 "@/hooks/..."
 
-export default function DuelCardHeader({
-  code, modelName, kana, official, titleLogoUrl, titleWidthFraction = 0.75,
-}: {
+type Props = {
   code: string;
   modelName: string;
   kana?: string;
   official?: string;
   titleLogoUrl?: string;
-  titleWidthFraction?: number;
-}) {
+  side: "left" | "right";
+  cardId?: number | string;
+  shrinkFactor?: number; // 新增：可调节缩小系数，默认 0.9
+};
+
+export default function DuelCardHeader({
+  code,
+  modelName,
+  kana,
+  official,
+  titleLogoUrl,
+  side,
+  shrinkFactor = 0.98, // 默认值
+}: Props) {
   const codeRef = useRef<HTMLSpanElement>(null);
   const nameRef = useRef<HTMLSpanElement>(null);
 
-  // 两行独立压缩 + 打开 debug
-  useCompressToWidth(codeRef, { fraction: titleWidthFraction, debug: true });
-  useCompressToWidth(nameRef, { fraction: titleWidthFraction, debug: true });
+  const resetLine = (el: HTMLSpanElement | null) => {
+    if (!el) return;
+    el.style.transform = "";
+    el.style.transformOrigin = "left center";
+    el.style.display = "inline-block";
+    el.style.whiteSpace = "nowrap";
+  };
+
+  const fitLine = (el: HTMLSpanElement | null) => {
+    if (!el) return;
+    const titleBox =
+      el.closest<HTMLElement>(".card-title") ?? el.parentElement;
+    if (!titleBox) return;
+
+    const A = titleBox.clientWidth * shrinkFactor; // ← 加入余量
+    const naturalW = el.scrollWidth;
+
+    if (naturalW > A) {
+      const scaleX = A / naturalW;
+      el.style.transformOrigin = "left center";
+      el.style.transform = `scaleX(${scaleX})`;
+    } else {
+      el.style.transform = "";
+    }
+  };
+
+  useLayoutEffect(() => {
+    resetLine(codeRef.current);
+    resetLine(nameRef.current);
+    fitLine(codeRef.current);
+    fitLine(nameRef.current);
+  }, [code, modelName, side, titleLogoUrl, shrinkFactor]);
 
   return (
     <>

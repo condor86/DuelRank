@@ -52,7 +52,15 @@ export default function DuelCard({
 
       <div className="card-body body-relaxed">
         <div className="info-stack">
-          <DuelCardHeader code={code} modelName={modelName} kana={item.kana} official={item.official} titleLogoUrl={titleLogoUrl} debugLabelPrefix={side.toUpperCase()}/>
+          <DuelCardHeader
+            side={side}                                // ← 这里改为传 side
+            code={code}
+            modelName={modelName}
+            kana={item.kana}
+            official={item.official}
+            titleLogoUrl={titleLogoUrl}
+            cardId={item.id}
+          />
 
           <BadgeRow badges={badges} />
 
