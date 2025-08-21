@@ -44,6 +44,7 @@ export default function DuelCard({
   }, [item.classification, item.organization, item.series, item.tags]);
 
   const quoteText = item.quoteText ?? item.notes ?? "";
+  const titleLogoUrl = seriesLogoUrl ?? orgLogoUrl; // 或反过来：series 优先
 
   return (
     <article className="card">
@@ -51,30 +52,28 @@ export default function DuelCard({
 
       <div className="card-body body-relaxed">
         <div className="info-stack">
-          <DuelCardHeader code={code} modelName={modelName} kana={item.kana} official={item.official} />
-
-          {/* LOGO row 可单独拆；此处暂留在壳里 */}
-          {logos.length > 0 && (
-            <div className="logos-row">
-              {seriesLogoUrl && <img src={seriesLogoUrl} alt={`${item.series ?? "Series"} logo`} className="logo-inline" loading="lazy" />}
-              {orgLogoUrl && <img src={orgLogoUrl} alt={`${item.organization ?? "Organization"} logo`} className="logo-inline" loading="lazy" />}
-            </div>
-          )}
+          <DuelCardHeader code={code} modelName={modelName} kana={item.kana} official={item.official} titleLogoUrl={titleLogoUrl} debugLabelPrefix={side.toUpperCase()}/>
 
           <BadgeRow badges={badges} />
 
-          {/* specs 放在 tag 之后、quote 之前 */}
-          {item.specs && (
-            <div className="specs-wrapper" style={{ fontSize: "0.95em", lineHeight: 1.4 }}>
-              <SpecsBlock specs={item.specs} />
-            </div>
-          )}
-
           <QuoteBlock text={quoteText} by={item.quoteBy} />
+
+          {/* specs 放在 tag 之后、quote 之前（折叠块） */}
+          {item.specs && (
+            <details className="specs-details">
+              <summary className="specs-summary">
+                <span className="specs-caret" aria-hidden>▶</span>
+                <span>Profile</span>
+              </summary>
+              <div className="specs-wrapper">
+                <SpecsBlock specs={item.specs} />
+              </div>
+            </details>
+          )}
 
           {item.wikiUrl && (
             <a className="btn btn-ghost" href={item.wikiUrl} target="_blank" rel="noreferrer">
-              查看百科
+              Wiki
             </a>
           )}
         </div>

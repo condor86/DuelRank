@@ -128,5 +128,120 @@
   margin-bottom: 1.4em;  /* 1.4 ≈ 与我们给 specs 的 line-height 对齐 */
 }
 
-/* 关键：在整个 specs 区块的顶部和底部，各留出“正好一行”的内边距 */
+/* 关键：在整个 specs 区块的顶部和底部，各留出“正好一行”的内边距 */ 
 .specs-block { padding-top: 1.4em}
+
+/* 标题容器：高度只由左侧两行决定；右侧留出与 LOGO 等宽的内边距 */
+.title-zone {
+  position: relative;
+  padding-right: calc(var(--logo-w, 0px) + 8px); /* 右侧预留，宽度自动计算 */
+}
+
+/* 左侧两行：块级、无外边距，避免高度被 margin 影响 */
+.card-title .title-code,
+.card-title .title-name {
+  display: block;
+  margin: 0;
+}
+
+/* 右侧 LOGO 的绝对定位容器：贴右侧，纵向顶到底，高度=左侧两行总高 */
+.title-float {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: var(--logo-w, 0px);   /* 宽度 = 左高 × 宽高比（JS 写入） */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;        /* 避免挡交互（可按需去掉） */
+}
+
+/* 图片：等高容器，等比缩放，不会撑开父容器 */
+.title-float-img {
+  display: block;
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  max-width: 100%;
+}
+
+
+
+/* 折叠容器本体 */
+.specs-details {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-top: 12px;
+}
+
+/* Summary 行（点击区） */
+.specs-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-weight: 600;           /* 标题稍重一点 */
+  cursor: pointer;
+  user-select: none;
+}
+
+/* 小三角：展开时旋转 */
+.specs-caret {
+  transition: transform .18s ease;
+  display: inline-block;
+  transform: translateY(1px); /* 视觉微调 */
+}
+.specs-details[open] .specs-caret {
+  transform: rotate(90deg) translateY(0);
+}
+
+/* 展开内容区：沿用你之前的字号行高 */
+.specs-wrapper { font-size: 0.95em; line-height: 1.4; padding: 8px 0 0; }
+
+/* 你之前的间距规则继续生效（保留空行感） */
+.specs-block .specs-group { margin-bottom: 1.4em; }
+/* 如需首尾也空一行，可再加：.specs-block { padding-top: 1.4em; padding-bottom: 1.4em; } */
+
+
+
+/* FitLine 行内块 + 左对齐缩放基点 */
+.fitline {
+  display: inline-block;
+  transform-origin: left center;
+  will-change: transform, letter-spacing;
+}
+
+/* 两行标题还是块级各占一行（避免和 FitLine 冲突） */
+.card-title { display: flex; flex-direction: column; gap: 4px; }
+.title-code, .title-name { display: block; }
+
+
+.title-code,
+.title-name {
+  white-space: nowrap;
+  display: inline-block;
+  transform-origin: left center;
+}
+
+
+/* 单行测量 + 让 ::after 定位不影响布局 */
+.title-code,
+.title-name {
+  white-space: nowrap;
+  display: inline-block;
+  position: relative;
+  transform-origin: left center;
+}
+
+/* Debug 标注：读取 data-fit-debug，显示在文字右侧，不占布局宽度 */
+.fit-debug::after {
+  content: attr(data-fit-debug);
+  position: absolute;
+  left: 100%;
+  margin-left: 8px;
+  top: 0;
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.7;
+  color: #bcd;                 /* 看得清一点 */
+  pointer-events: none;
+}

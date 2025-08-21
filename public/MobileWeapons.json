@@ -63,7 +63,8 @@
     },
     {
       "id": 4,
-      "name": "XXXG-00W0 Wing Zero",
+      "code": "XXXG-00W0",
+      "modelName": "Wing Zero GUNDAM",
       "series": "Gundam Wing",
       "imgUrl": "https://i.pinimg.com/1200x/8a/61/30/8a6130440fbb4d4372bcb8e0345b76c7.jpg",
       "crop": 20,
