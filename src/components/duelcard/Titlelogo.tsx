@@ -41,40 +41,21 @@ export default function TitleLogo({ src }: { src: string }) {
       return { fontSize: fs, lineHeight: lh };
     };
 
-    const update = () => {
-      const codeEl = titleBox.querySelector<HTMLElement>(".title-code");
-      const nameEl = titleBox.querySelector<HTMLElement>(".title-name");
-      const m1 = getMetrics(codeEl);
-      const m2 = getMetrics(nameEl);
-      const fontSize = Math.max(m1.fontSize, m2.fontSize);
-      const lineHeight = Math.max(m1.lineHeight, m2.lineHeight);
-      const lineSpacing = Math.max(lineHeight - fontSize, 0);
-      const targetH = lineHeight * 2 + lineSpacing;
-      const r = ratio || 1;
-      const targetW = targetH * r;
-      applyVars(targetW, targetH);
-      console.log("[TitleLogo] apply", { targetW, targetH });
-    };
+    const codeEl = titleBox.querySelector<HTMLElement>(".title-code");
+    const nameEl = titleBox.querySelector<HTMLElement>(".title-name");
+    const m1 = getMetrics(codeEl);
+    const m2 = getMetrics(nameEl);
+    const fontSize = Math.max(m1.fontSize, m2.fontSize);
+    const lineHeight = Math.max(m1.lineHeight, m2.lineHeight);
+    const lineSpacing = Math.max(lineHeight - fontSize, 0);
+    const targetH = lineHeight * 2 + lineSpacing;
+    const r = ratio || 1;
+    const targetW = targetH * r;
 
-    // 首次应用
-    update();
+    applyVars(targetW, targetH);
 
-    // 监听两行区域尺寸变化
-    let ro: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(update);
-      ro.observe(titleBox);
-    } else {
-      const onResize = () => update();
-      window.addEventListener("resize", onResize);
-      return () => window.removeEventListener("resize", onResize);
-    }
-
-    // **关键：组件卸载时清零，避免幽灵占位**
     return () => {
-      if (ro) ro.disconnect();
       clearVars();
-      console.log("[TitleLogo] cleanup -> clear --logo-w/--logo-h");
     };
   }, [ratio, src]);
 
