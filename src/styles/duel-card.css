@@ -223,25 +223,26 @@
 }
 
 
-/* 单行测量 + 让 ::after 定位不影响布局 */
-.title-code,
-.title-name {
-  white-space: nowrap;
-  display: inline-block;
+.title-zone {
   position: relative;
-  transform-origin: left center;
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
-
-/* Debug 标注：读取 data-fit-debug，显示在文字右侧，不占布局宽度 */
-.fit-debug::after {
-  content: attr(data-fit-debug);
+.card-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.title-float {
   position: absolute;
-  left: 100%;
-  margin-left: 8px;
+  right: 0;
   top: 0;
-  font-size: 11px;
-  line-height: 1;
-  opacity: 0.7;
-  color: #bcd;                 /* 看得清一点 */
-  pointer-events: none;
+  width: var(--logo-w, 0);
+  height: var(--logo-h, 0);
+}
+.title-float-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* 过宽卡宽，过高卡高，保持原图比例 */
+  display: block;
 }

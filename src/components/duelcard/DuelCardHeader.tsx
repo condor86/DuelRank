@@ -1,5 +1,5 @@
 // src/components/duelcard/DuelCardHeader.tsx
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 
 type Props = {
   code: string;
@@ -9,6 +9,8 @@ type Props = {
   titleLogoUrl?: string;        // 允许为空：流程一致
   side: "left" | "right";
   cardId?: number | string;
+  /** LOGO 预留盒子宽高比：宽/高，默认 4:3 */
+  logoBoxRatio?: number;
 };
 
 export default function DuelCardHeader({
@@ -17,32 +19,13 @@ export default function DuelCardHeader({
   kana,
   official,
   titleLogoUrl,
+  logoBoxRatio = 4 / 3,
 }: Props) {
   const zoneRef = useRef<HTMLDivElement>(null);      // .title-zone
   const titleBoxRef = useRef<HTMLDivElement>(null);  // .card-title
   const codeRef = useRef<HTMLSpanElement>(null);
   const nameRef = useRef<HTMLSpanElement>(null);
 
-  // 仅用于得到 logo 宽高比；为空则保持 null
-  const [logoRatio, setLogoRatio] = useState<number | null>(null);
-
-  // 预取 logo 宽高比；无 URL 时保持 null（逻辑仍执行，宽=0）
-  useLayoutEffect(() => {
-    let cancelled = false;
-    setLogoRatio(null);
-    if (!titleLogoUrl) return;
-    const img = new Image();
-    img.onload = () => {
-      if (!cancelled) {
-        const r = (img.naturalWidth || 1) / (img.naturalHeight || 1);
-        setLogoRatio(r);
-      }
-    };
-    img.src = titleLogoUrl;
-    return () => { cancelled = true; };
-  }, [titleLogoUrl]);
-
-  // 工具：清除某一行的缩放
   const resetLine = (el: HTMLSpanElement | null) => {
     if (!el) return;
     el.style.transform = "";
@@ -51,7 +34,6 @@ export default function DuelCardHeader({
     el.style.whiteSpace = "nowrap";
   };
 
-  // 工具：对某一行执行横向缩放
   const fitLine = (el: HTMLSpanElement | null, available: number) => {
     if (!el) return;
     const prevT = el.style.transform;
@@ -73,17 +55,17 @@ export default function DuelCardHeader({
     }
   };
 
-  // 统一流程：行高 -> 写入 logo 变量 -> 文字缩放
+  // 统一流程：行高 -> 写入 LOGO 盒子变量 -> 文字缩放
   useLayoutEffect(() => {
     const zone = zoneRef.current;
     const titleBox = titleBoxRef.current;
     if (!zone || !titleBox) return;
 
-    // 1) 清除旧的文字缩放
+    // 1) 清旧缩放
     resetLine(codeRef.current);
     resetLine(nameRef.current);
 
-    // 读取两行的字号/行高（取最大值）
+    // 2) 读取两行的字号/行高（取最大），计算两行高度 + 一次行距
     const getMetrics = (el: HTMLElement | null) => {
       if (!el) return { fontSize: 0, lineHeight: 0 };
       const cs = getComputedStyle(el);
@@ -96,14 +78,17 @@ export default function DuelCardHeader({
     const fontSize = Math.max(m1.fontSize, m2.fontSize);
     const lineHeight = Math.max(m1.lineHeight, m2.lineHeight);
     const lineSpacing = Math.max(lineHeight - fontSize, 0);
-    const targetH = Math.round(lineHeight * 2 + lineSpacing);
+    const boxH = Math.round(lineHeight * 2 + lineSpacing);     // 目标高度（两行 + 一次行距）
+    const boxW = Math.round(boxH * logoBoxRatio);               // 目标宽度（固定比例）
 
-    // 2) 写入变量（无 logo 时宽=0；高仍写入，保持统一）
-    const w = Math.round(targetH * (logoRatio ?? 0));
-    zone.style.setProperty("--logo-w", `${w}px`);
-    zone.style.setProperty("--logo-h", `${targetH}px`);
+    // 3) 写入 LOGO 盒子变量
+    // 是否有图不再分支：没有图则给 <img> 不渲染，但盒子变量按规则写入；
+    // 如果你不想无图预留空间，可把下面一行改为 const finalW = titleLogoUrl ? boxW : 0;
+    const finalW = titleLogoUrl ? boxW : 0;
+    zone.style.setProperty("--logo-w", `${finalW}px`);
+    zone.style.setProperty("--logo-h", `${boxH}px`);
 
-    // 3) 同帧测可用宽并做横向缩放（保证变量已生效）
+    // 4) 同帧测可用宽并做横向缩放（保证变量已生效）
     let raf = 0;
     let cancelled = false;
     const run = () => {
@@ -115,21 +100,20 @@ export default function DuelCardHeader({
       });
     };
 
-    // 等字体就绪再执行，避免首屏行高抖动
     if ((document as any).fonts?.ready) {
       (document as any).fonts.ready.then(run);
     } else {
       run();
     }
 
-    // 卸载：清零变量，杜绝残留
+    // 卸载时清零变量，避免残留
     return () => {
       cancelled = true;
       if (raf) cancelAnimationFrame(raf);
       zone.style.setProperty("--logo-w", "0px");
       zone.style.setProperty("--logo-h", "0px");
     };
-  }, [code, modelName, logoRatio]);
+  }, [code, modelName, titleLogoUrl, logoBoxRatio]);
 
   return (
     <>
@@ -139,7 +123,7 @@ export default function DuelCardHeader({
           <span ref={nameRef} className="title-name">{modelName}</span>
         </div>
 
-        {/* 只是展示；变量已在上方写入 */}
+        {/* 固定比例的 LOGO 盒子；图片在盒子内用 object-fit: contain 适配 */}
         <div className="title-float">
           {titleLogoUrl && (
             <img className="title-float-img" src={titleLogoUrl} alt="logo" loading="eager" />
