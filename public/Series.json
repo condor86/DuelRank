@@ -1,19 +1,19 @@
 [
     {
       "name": "Mobile Suit Gundam",
-      "logo_url": "/logos/series/gundam.png"
+      "logo_url": "/logos/series/0079.png"
     },
     {
-      "name": "Gundam Wing",
-      "logo_url": "/logos/series/gundam2.png"
+      "name": "Mobile Suit Zeta Gundam",
+      "logo_url": "/logos/series/zeta.png"
     },
     {
-      "name": "Zeta Gundam",
-      "logo_url": ""
+      "name": "Mobile Suit Gundam Unicorn",
+      "logo_url": "/logos/series/uc.png"
     },
     {
-      "name": "Gundam Unicorn",
-      "logo_url": "/logos/series/gundam4.png"
+      "name": "Mobile Suit Gundam Wing Endless Waltz",
+      "logo_url": "/logos/series/wingew.png"
     }
   ]
   

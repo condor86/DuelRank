@@ -3,21 +3,20 @@
       "id": 1,
       "code": "RX-78-2",
       "modelName": "GUNDAM",
-      "kana": "ガンダム",
-      "official": "A.E.U.G. Transformable Attack use Prototype Mobile Suit",
-      "quoteText": "This ν Gundam isn't just for show!",
-      "quoteBy": "Amuro Ray",
+      "kana": " (RX-78-2 ガンダム",
+      "official": "E.F.S.F. Prototype Close-combat Mobile Suit",
+      "quoteText": "高达屹立于大地之上",
+      "quoteBy": "",
       "classification": "MS",
       "series": "Mobile Suit Gundam",
       "imgUrl": "https://i.pinimg.com/736x/61/8f/15/618f1511d88e0bf3f9bf0e2f9ef7df45.jpg",
-      "wikiUrl": "https://gundam.fandom.com/wiki/MSZ-006_Zeta_Gundam",
+      "wikiUrl": "https://gundam.fandom.com/wiki/RX-78-2_Gundam",
       "tags": [""],
       "crop": 10,
-      "organization":"A.E.U.G",
+      "organization":"E.F.S.F.",
       "specs": {
         "dimensions": {
-          "head_height": { "value": 18.0, "unit": "m" },
-          "overall_height": { "value": 18.5, "unit": "m" }
+          "head_height": { "value": 18.0, "unit": "m" }
         },
         "mass": {
           "empty_weight": { "value": 43.4, "unit": "t" },
@@ -33,9 +32,20 @@
         "armor": {
           "type": "Luna Titanium Alloy"
         },
+        "Movement": {
+          "Max Acceleration": { "value": 0.93, "unit": "G" },
+          "Max Speed":{"value": 165, "unit": "km/h"},
+          "Rocket Thrusters":{"value": "2 × 24000 kg; 4 × 1870 kg"}
+        },
         "armaments": [
+          { "name": "60mm Vulcan Gun", "count": 2 },
+          { "name": "BOWA-XBR-M-79-07G Beam Rifle" },
+          { "name": "RX-M-SH-008/S-01025 Shield" },
           { "name": "Beam Saber", "count": 2 },
-          { "name": "Beam Rifle" }
+          { "name": "1-2 × BLASH-XHB-L-03/N-STD 380mm Hyper Bazooka" },
+          { "name": "Gundam Hammer" },
+          { "name": "Hyper Hammer" },
+          { "name": "Super Napalm" }
         ]
       }
     },
@@ -43,34 +53,116 @@
       "id": 2,
       "code": "MSZ-006",
       "modelName": "Zeta Gundam",
-      "kana": "ガンダム",
-      "series": "Zeta Gundam",
+      "kana": "MSZ-006-1 Ζガンダム",
+      "official": "A.E.U.G. Transformable Attack use Prototype Mobile Suit",
+      "quoteText": "你这样的大人，我要修正你！",
+      "quoteBy": "卡缪·维丹",
+      "classification": "Transformable",
+      "series": "Mobile Suit Zeta Gundam",
       "imgUrl": "https://i.pinimg.com/1200x/e3/0a/a7/e30aa71018b1327fe7e346ed2a6efe2c.jpg",  
       "crop": 0,
       "wikiUrl": "https://gundam.fandom.com/wiki/MSZ-006_Zeta_Gundam",
-      "tags": ["Transformable"],
-      "notes": "可变形，机设流线。"
+      "tags": [""],
+      "organization":"A.E.U.G.",
+      "specs": {
+        "dimensions": {
+          "head_height": { "value": 19.85, "unit": "m" },
+          "overall_height": { "value": 24.32, "unit": "m" }
+        },
+        "mass": {
+          "empty_weight": { "value": 28.7, "unit": "t" },
+          "max_weight": { "value": 62.3, "unit": "t" }
+        },
+        "power": {
+          "plant": "Minovsky Ultracompact Fusion Reactor",
+          "output": { "value": 2020, "unit": "kW" }
+        },
+        "sensors": {
+          "range": { "value": 14000, "unit": "m" }
+        },
+        "armor": {
+          "type": "Gundarium γ Alloy"
+        },
+        "Movement": {
+          "Max Acceleration": { "value": 1.81, "unit": "G" },
+          "Mass Ratio":{"value": 1.70},
+          "Propulsion":{"value": "Thermonuclear Jet/Rocket Engines"},
+          "Rocket Thrusters":{"value": 112600, "unit": "kg"},
+          "Vernier Thrusters":{"value": 8}
+        },
+        "armaments": [
+          { "name": "MU-86G 60mm Vulcan Gun", "count": 2 },
+          { "name": "2-tube Grenade Launcher", "count": 2 },
+          { "name": "A.E.BLASH XB-G-35/Du.105 Beam Saber (Beam Gun)", "count": 2 },
+          { "name": "XBR-M87A2 Beam Rifle (Long Beam Saber)" },
+          { "name": "FF-XV-SH-609Z Shield" },
+          { "name": "Anchor Wire", "count": 2 },
+          { "name": "Launcher (Long Beam Saber)H-Baz-87-A*E/Ver.004 Hyper Bazooka" }
+        ]
+      }
     },
     {
       "id": 3,
-      "name": "RX-0 Unicorn",
-      "series": "Gundam Unicorn",
+      "code": "RX-0",
+      "modelName": "Unicorn Gundam",
+      "kana": "RX-0 ユニコーンガンダム",
+      "official": "Full Psycho-Frame Prototype Mobile Suit",
+      "quoteText": "可能性之兽",
+      "quoteBy": "",
+      "classification": "MS",
+      "series": "Mobile Suit Gundam Unicorn",
       "imgUrl": "https://i.pinimg.com/1200x/9d/dd/b5/9dddb5c3eaf6f1c060bdd0d86abb3e32.jpg",
       "crop": 0,
-      "wikiUrl": "https://i.pinimg.com/1200x/9d/dd/b5/9dddb5c3eaf6f1c060bdd0d86abb3e32.jpg",
+      "wikiUrl": "https://gundam.fandom.com/wiki/RX-0_Unicorn_Gundam",
       "tags": ["Psycho-Frame"],
-      "notes": "毁灭模式帅到掉渣。"
+      "organization":"E.F.S.F.",
+      "specs": {
+        "dimensions": {
+          "overall_height (Unicorn Mode)": { "value": 19.7, "unit": "m" },
+          "overall_height (Destroy Mode)": { "value": 21.7, "unit": "m" }
+        },
+        "mass": {
+          "empty_weight": { "value": 23.7, "unit": "t" },
+          "max_weight": { "value": 42.7, "unit": "t" }
+        },
+        "power": {
+          "plant": "Minovsky Ultracompact Fusion Reactor",
+          "output": { "value": 3480, "unit": "kW (Unmeasurable in Destroy Mode)" }
+        },
+        "sensors": {
+          "range": { "value": 22000, "unit": "m" }
+        },
+        "armor": {
+          "type": "Gundarium Alloy"
+        },
+        "Movement": {
+          "Rocket Thrusters":{"value": 142600, "unit": "kg (Unmeasurable in Destroy Mode)"}
+        },
+        "armaments": [
+          { "name": "60mm Vulcan Gun", "count": 2 },
+          { "name": " Beam Saber", "count": 4 },
+          { "name": "Beam Magnum" },
+          { "name": "Hyper Bazooka" },
+          { "name": "Shield (I-Field Generator)" }
+        ]
+      }
     },
     {
       "id": 4,
       "code": "XXXG-00W0",
-      "modelName": "Wing Zero GUNDAM",
-      "series": "Gundam Wing",
+      "modelName": "Wing Gundam Zero",
+      "kana": "XXXG-00W0 ウイングガンダムゼロ",
+      "official": "Transformable ZERO System General-Purpose Mobile Suit",
+      "quoteText": "掉毛飞翼",
+      "quoteBy": "",
+      "classification": "Transformable",
+      "series": "Mobile Suit Gundam Wing Endless Waltz",
       "imgUrl": "https://i.pinimg.com/1200x/8a/61/30/8a6130440fbb4d4372bcb8e0345b76c7.jpg",
       "crop": 20,
-      "wikiUrl": "https://i.pinimg.com/1200x/8a/61/30/8a6130440fbb4d4372bcb8e0345b76c7.jpg",
-      "tags": ["Twin Buster"],
-      "notes": "双加农标志性武装。"
+      "wikiUrl": "https://gundam.fandom.com/wiki/XXXG-00W0_Wing_Gundam_Zero_EW",
+      "tags": [""],
+      "notes": "双加农标志性武装。",
+      "organization":"Colony Liberation Organization"
     }
   ]
   

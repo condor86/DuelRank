@@ -1,15 +1,14 @@
 // src/components/duelcard/DuelCardHeader.tsx
-import { useRef, useLayoutEffect } from "react";
-import TitleLogo from "./TitleLogo";
+import { useLayoutEffect, useRef, useState } from "react";
 
 type Props = {
   code: string;
   modelName: string;
   kana?: string;
   official?: string;
-  titleLogoUrl?: string;        // 有/无 Logo 均不影响计算
+  titleLogoUrl?: string;        // 允许为空：流程一致
   side: "left" | "right";
-  cardId?: number | string;     // 可选：调试标识
+  cardId?: number | string;
 };
 
 export default function DuelCardHeader({
@@ -19,9 +18,31 @@ export default function DuelCardHeader({
   official,
   titleLogoUrl,
 }: Props) {
+  const zoneRef = useRef<HTMLDivElement>(null);      // .title-zone
+  const titleBoxRef = useRef<HTMLDivElement>(null);  // .card-title
   const codeRef = useRef<HTMLSpanElement>(null);
   const nameRef = useRef<HTMLSpanElement>(null);
 
+  // 仅用于得到 logo 宽高比；为空则保持 null
+  const [logoRatio, setLogoRatio] = useState<number | null>(null);
+
+  // 预取 logo 宽高比；无 URL 时保持 null（逻辑仍执行，宽=0）
+  useLayoutEffect(() => {
+    let cancelled = false;
+    setLogoRatio(null);
+    if (!titleLogoUrl) return;
+    const img = new Image();
+    img.onload = () => {
+      if (!cancelled) {
+        const r = (img.naturalWidth || 1) / (img.naturalHeight || 1);
+        setLogoRatio(r);
+      }
+    };
+    img.src = titleLogoUrl;
+    return () => { cancelled = true; };
+  }, [titleLogoUrl]);
+
+  // 工具：清除某一行的缩放
   const resetLine = (el: HTMLSpanElement | null) => {
     if (!el) return;
     el.style.transform = "";
@@ -30,13 +51,9 @@ export default function DuelCardHeader({
     el.style.whiteSpace = "nowrap";
   };
 
-  const fitLine = (el: HTMLSpanElement | null) => {
+  // 工具：对某一行执行横向缩放
+  const fitLine = (el: HTMLSpanElement | null, available: number) => {
     if (!el) return;
-
-    const titleBox = el.closest<HTMLElement>(".card-title") ?? el.parentElement;
-    if (!titleBox) return;
-    const available = titleBox.clientWidth;
-
     const prevT = el.style.transform;
     el.style.transform = "none";
     const naturalW = el.scrollWidth;
@@ -56,48 +73,78 @@ export default function DuelCardHeader({
     }
   };
 
-  const recalcBoth = () => {
+  // 统一流程：行高 -> 写入 logo 变量 -> 文字缩放
+  useLayoutEffect(() => {
+    const zone = zoneRef.current;
+    const titleBox = titleBoxRef.current;
+    if (!zone || !titleBox) return;
+
+    // 1) 清除旧的文字缩放
     resetLine(codeRef.current);
     resetLine(nameRef.current);
-    fitLine(codeRef.current);
-    fitLine(nameRef.current);
-  };
 
-  useLayoutEffect(() => {
-    // 初次：清 & 算
-    recalcBoth();
+    // 读取两行的字号/行高（取最大值）
+    const getMetrics = (el: HTMLElement | null) => {
+      if (!el) return { fontSize: 0, lineHeight: 0 };
+      const cs = getComputedStyle(el);
+      const fs = parseFloat(cs.fontSize) || 16;
+      const lh = cs.lineHeight === "normal" ? fs * 1.2 : parseFloat(cs.lineHeight);
+      return { fontSize: fs, lineHeight: lh };
+    };
+    const m1 = getMetrics(codeRef.current);
+    const m2 = getMetrics(nameRef.current);
+    const fontSize = Math.max(m1.fontSize, m2.fontSize);
+    const lineHeight = Math.max(m1.lineHeight, m2.lineHeight);
+    const lineSpacing = Math.max(lineHeight - fontSize, 0);
+    const targetH = Math.round(lineHeight * 2 + lineSpacing);
 
-    // 监听尺寸变化：重算（包括 Logo 加载后导致的可用宽变化）
-    const codeEl = codeRef.current;
-    const titleBox =
-      codeEl?.closest<HTMLElement>(".card-title") ?? codeEl?.parentElement;
-    if (!titleBox) return;
+    // 2) 写入变量（无 logo 时宽=0；高仍写入，保持统一）
+    const w = Math.round(targetH * (logoRatio ?? 0));
+    zone.style.setProperty("--logo-w", `${w}px`);
+    zone.style.setProperty("--logo-h", `${targetH}px`);
 
-    let ro: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(() => {
-        recalcBoth();
+    // 3) 同帧测可用宽并做横向缩放（保证变量已生效）
+    let raf = 0;
+    let cancelled = false;
+    const run = () => {
+      if (cancelled) return;
+      raf = requestAnimationFrame(() => {
+        const available = titleBox.clientWidth;
+        fitLine(codeRef.current, available);
+        fitLine(nameRef.current, available);
       });
-      ro.observe(titleBox);
-      const titleZone = titleBox.closest<HTMLElement>(".title-zone");
-      if (titleZone) ro.observe(titleZone);
+    };
+
+    // 等字体就绪再执行，避免首屏行高抖动
+    if ((document as any).fonts?.ready) {
+      (document as any).fonts.ready.then(run);
     } else {
-      const handler = () => recalcBoth();
-      window.addEventListener("resize", handler);
-      return () => window.removeEventListener("resize", handler);
+      run();
     }
 
-    return () => ro && ro.disconnect();
-  }, [code, modelName, titleLogoUrl]);
+    // 卸载：清零变量，杜绝残留
+    return () => {
+      cancelled = true;
+      if (raf) cancelAnimationFrame(raf);
+      zone.style.setProperty("--logo-w", "0px");
+      zone.style.setProperty("--logo-h", "0px");
+    };
+  }, [code, modelName, logoRatio]);
 
   return (
     <>
-      <div className="title-zone">
-        <div className="card-title">
+      <div ref={zoneRef} className="title-zone">
+        <div ref={titleBoxRef} className="card-title">
           <span ref={codeRef} className="title-code">{code}</span>
           <span ref={nameRef} className="title-name">{modelName}</span>
         </div>
-        {titleLogoUrl && <TitleLogo src={titleLogoUrl} />}
+
+        {/* 只是展示；变量已在上方写入 */}
+        <div className="title-float">
+          {titleLogoUrl && (
+            <img className="title-float-img" src={titleLogoUrl} alt="logo" loading="eager" />
+          )}
+        </div>
       </div>
 
       {kana && <div className="card-kana">{kana}</div>}
