@@ -1,36 +1,83 @@
 // src/components/duelcard/TitleLogo.tsx
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 export default function TitleLogo({ src }: { src: string }) {
   const zoneRef = useRef<HTMLDivElement | null>(null);
   const [ratio, setRatio] = useState<number | null>(null);
 
-  // 预加载拿到图片宽高比（997/802这种）
   useLayoutEffect(() => {
+    if (!src) return;
     const img = new Image();
-    img.onload = () => setRatio(img.naturalWidth / img.naturalHeight || 1);
+    img.onload = () => setRatio((img.naturalWidth || 1) / (img.naturalHeight || 1));
     img.src = src;
   }, [src]);
 
-  // 把需要的宽度写进父容器的 CSS 变量 --logo-w（= zone 高度 × ratio）
   useLayoutEffect(() => {
-    if (!ratio) return;
-    const el = zoneRef.current?.closest<HTMLDivElement>(".title-zone");
-    if (!el) return;
+    const zone = zoneRef.current?.closest<HTMLElement>(".title-zone");
+    if (!zone) return;
 
-    const update = () => {
-      const h = el.clientHeight;                  // 高度由左侧两行自然决定
-      const w = Math.round(h * ratio);            // 按比例算出需要的宽
-      el.style.setProperty("--logo-w", `${w}px`); // 让 CSS 用这个宽度
+    const applyVars = (w: number, h: number) => {
+      zone.style.setProperty("--logo-w", `${Math.max(0, Math.round(w))}px`);
+      zone.style.setProperty("--logo-h", `${Math.max(0, Math.round(h))}px`);
+      zone.classList.add("has-logo");
+      zone.classList.remove("no-logo");
     };
 
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    update();
-    return () => ro.disconnect();
-  }, [ratio]);
+    const clearVars = () => {
+      zone.style.setProperty("--logo-w", "0px");
+      zone.style.setProperty("--logo-h", "0px");
+      zone.classList.remove("has-logo");
+      zone.classList.add("no-logo");
+    };
 
-  // 绝对定位容器：高度=父容器高度，宽度使用 --logo-w
+    const titleBox = zone.querySelector<HTMLElement>(".card-title");
+    if (!titleBox) return;
+
+    const getMetrics = (el: HTMLElement | null) => {
+      if (!el) return { fontSize: 0, lineHeight: 0 };
+      const cs = getComputedStyle(el);
+      const fs = parseFloat(cs.fontSize) || 16;
+      const lh = cs.lineHeight === "normal" ? fs * 1.2 : parseFloat(cs.lineHeight);
+      return { fontSize: fs, lineHeight: lh };
+    };
+
+    const update = () => {
+      const codeEl = titleBox.querySelector<HTMLElement>(".title-code");
+      const nameEl = titleBox.querySelector<HTMLElement>(".title-name");
+      const m1 = getMetrics(codeEl);
+      const m2 = getMetrics(nameEl);
+      const fontSize = Math.max(m1.fontSize, m2.fontSize);
+      const lineHeight = Math.max(m1.lineHeight, m2.lineHeight);
+      const lineSpacing = Math.max(lineHeight - fontSize, 0);
+      const targetH = lineHeight * 2 + lineSpacing;
+      const r = ratio || 1;
+      const targetW = targetH * r;
+      applyVars(targetW, targetH);
+      console.log("[TitleLogo] apply", { targetW, targetH });
+    };
+
+    // 首次应用
+    update();
+
+    // 监听两行区域尺寸变化
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(update);
+      ro.observe(titleBox);
+    } else {
+      const onResize = () => update();
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }
+
+    // **关键：组件卸载时清零，避免幽灵占位**
+    return () => {
+      if (ro) ro.disconnect();
+      clearVars();
+      console.log("[TitleLogo] cleanup -> clear --logo-w/--logo-h");
+    };
+  }, [ratio, src]);
+
   return (
     <div ref={zoneRef} className="title-float">
       <img className="title-float-img" src={src} alt="logo" loading="eager" />

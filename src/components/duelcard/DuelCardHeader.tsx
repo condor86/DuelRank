@@ -24,53 +24,135 @@ export default function DuelCardHeader({
   const codeRef = useRef<HTMLSpanElement>(null);
   const nameRef = useRef<HTMLSpanElement>(null);
 
-  // 统一清除旧缩放（不看是否超宽）
   const resetLine = (el: HTMLSpanElement | null) => {
     if (!el) return;
-    el.style.transform = "";                 // 清掉上次的缩放
+    el.style.transform = "";
     el.style.transformOrigin = "left center";
-    el.style.display = "inline-block";       // 保证缩放只作用于这一行
-    el.style.whiteSpace = "nowrap";          // 自然宽测量按单行
+    el.style.display = "inline-block";
+    el.style.whiteSpace = "nowrap";
   };
 
-  // 对某一行：测自然宽 -> 与 A 比较 -> 必要时仅横向缩放
-  const fitLine = (el: HTMLSpanElement | null) => {
+  const fitLine = (el: HTMLSpanElement | null, line: "code" | "name") => {
     if (!el) return;
 
-    // A = 仅两行文字容器 .card-title 的实际宽度（红框宽度）
-    const titleBox =
-      el.closest<HTMLElement>(".card-title") ?? el.parentElement;
+    const titleBox = el.closest<HTMLElement>(".card-title") ?? el.parentElement;
     if (!titleBox) return;
-    const A = titleBox.clientWidth;
+    const A = titleBox.clientWidth; // 红框可用宽
 
-    // 确保测的是“去缩放的自然宽”
+    const prevT = el.style.transform;
+    el.style.transform = "none";
     const naturalW = el.scrollWidth;
+    el.style.transform = prevT;
 
     if (naturalW > A) {
       const scaleX = A / naturalW;
       el.style.transformOrigin = "left center";
-      el.style.transform = `scaleX(${scaleX})`; // 只压 X，高度不变
+      el.style.transform = `scaleX(${scaleX})`;
+      el.style.display = "inline-block";
+      el.style.whiteSpace = "nowrap";
+      console.log(
+        `[${side} | ${line} | ${cardId}] 缩放: ${scaleX.toFixed(3)}`,
+        { naturalWidth: naturalW, availableWidth: A }
+      );
     } else {
-      // 不超宽，保持清空后的状态（不缩放）
       el.style.transform = "";
+      el.style.transformOrigin = "left center";
+      el.style.display = "inline-block";
+      el.style.whiteSpace = "nowrap";
+      console.log(
+        `[${side} | ${line} | ${cardId}] 无需缩放`,
+        { naturalWidth: naturalW, availableWidth: A }
+      );
     }
   };
 
-  // 每次数据/侧边/Logo 变化：先清，再测，再按需缩放
-  useLayoutEffect(() => {
-    // 1) 清除旧缩放（确保不会继承上一组）
+  const recalcBoth = () => {
     resetLine(codeRef.current);
     resetLine(nameRef.current);
+    fitLine(codeRef.current, "code");
+    fitLine(nameRef.current, "name");
+  };
 
-    // 2) 分别测量与处理（左/右各两行 => 共四次）
-    fitLine(codeRef.current);
-    fitLine(nameRef.current);
-  }, [code, modelName, side, titleLogoUrl]);
+  /** 关键：布局快照（观察而不修改行为） */
+  const logLayoutSnapshot = (reason: string) => {
+    const titleBox = codeRef.current?.closest<HTMLElement>(".card-title") ?? null;
+    const titleZone = titleBox?.closest<HTMLElement>(".title-zone") ?? null;
+
+    if (!titleBox || !titleZone) return;
+
+    const zcs = window.getComputedStyle(titleZone);
+    const bcs = window.getComputedStyle(titleBox);
+
+    const cssLogoW = parseFloat(
+      zcs.getPropertyValue("--logo-w") || "0"
+    ) || 0;
+    const cssLogoH = parseFloat(
+      zcs.getPropertyValue("--logo-h") || "0"
+    ) || 0;
+
+    const data = {
+      reason,
+      side,
+      cardId,
+      hasLogoProp: !!titleLogoUrl,
+      zone_clientW: titleZone.clientWidth,
+      box_clientW: titleBox.clientWidth,
+      zone_paddingRight: zcs.paddingRight,
+      zone_gap: zcs.gap,
+      zone_display: zcs.display,
+      box_display: bcs.display,
+      box_flex: `${bcs.flexGrow} ${bcs.flexShrink} ${bcs.flexBasis}`,
+      cssLogoW,
+      cssLogoH,
+      zone_classes: titleZone.className,
+    };
+
+    // 重点告警：没有 logo 但变量/右侧预留仍存在
+    const warnGhost =
+      !titleLogoUrl && (cssLogoW > 0.5 || parseFloat(zcs.paddingRight) > 0);
+
+    if (warnGhost) {
+      console.warn("[GHOST-WIDTH?] 发现疑似幽灵占位", data);
+    } else {
+      console.log("[布局快照]", data);
+    }
+  };
+
+  useLayoutEffect(() => {
+    // 初次：清 & 算
+    recalcBoth();
+    logLayoutSnapshot("initial");
+
+    // 监听尺寸变化：只观测，不改变任何 CSS
+    const codeEl = codeRef.current;
+    const titleBox =
+      codeEl?.closest<HTMLElement>(".card-title") ?? codeEl?.parentElement;
+    if (!titleBox) return;
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => {
+        recalcBoth();
+        logLayoutSnapshot("resize-observer");
+      });
+      ro.observe(titleBox);
+      const titleZone = titleBox.closest<HTMLElement>(".title-zone");
+      if (titleZone) ro.observe(titleZone);
+    } else {
+      const handler = () => {
+        recalcBoth();
+        logLayoutSnapshot("window-resize");
+      };
+      window.addEventListener("resize", handler);
+      return () => window.removeEventListener("resize", handler);
+    }
+
+    return () => ro && ro.disconnect();
+  }, [code, modelName, side, titleLogoUrl, cardId]);
 
   return (
     <>
       <div className="title-zone">
-        {/* 调试红框：只框住两行文字，不含 Logo */}
         <div className="card-title" style={{ border: "1px solid red" }}>
           <span ref={codeRef} className="title-code">{code}</span>
           <span ref={nameRef} className="title-name">{modelName}</span>
