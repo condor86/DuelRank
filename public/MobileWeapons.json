@@ -161,8 +161,23 @@
       "crop": 20,
       "wikiUrl": "https://gundam.fandom.com/wiki/XXXG-00W0_Wing_Gundam_Zero_EW",
       "tags": [""],
-      "notes": "双加农标志性武装。",
       "organization":"Colony Liberation Organization"
+    },
+    {
+      "id": 5,
+      "code": "RX-93",
+      "modelName": "ν Gundam",
+      "kana": "RX-93 νガンダム",
+      "official": "E.F.S.F.(Lond Bell Unit)Amuro Ray's Use Mobile Suit for New Type",
+      "quoteText": "牛高达可不是只是长得好看而已！",
+      "quoteBy": "阿姆罗·雷",
+      "classification": "MS",
+      "series": "Mobile Suit Gundam: Char's Counterattack",
+      "imgUrl": "https://i.pinimg.com/1200x/eb/3f/e3/eb3fe3c8c8414652e27763281333e5ef.jpg",
+      "crop": 15,
+      "wikiUrl": "https://gundam.fandom.com/wiki/RX-93_%CE%BD_Gundam",
+      "tags": [""],
+      "organization":"E.F.S.F."
     }
   ]
   
