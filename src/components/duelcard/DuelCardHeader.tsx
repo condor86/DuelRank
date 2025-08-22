@@ -131,8 +131,12 @@ export default function DuelCardHeader({
         </div>
       </div>
 
-      {kana && <div className="card-kana">{kana}</div>}
-      {official && <div className="card-official">{official}</div>}
+      {(kana || official) && (
+        <div className="title-sub">
+          {kana && <div className="card-kana">{kana}</div>}
+          {official && <div className="card-official">{official}</div>}
+        </div>
+      )}
     </>
   );
 }
